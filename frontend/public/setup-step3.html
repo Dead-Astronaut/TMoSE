@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>my.py — The On-Ramp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, sans-serif; background: #000; color: #e8eaed; padding: 24px 32px; line-height: 1.6; }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    .step { font-size: 13px; color: #7fff5f; font-weight: 500; margin-bottom: 8px; display: block; }
+    h1 { font-weight: 700; font-size: 28px; color: #E8EAED; margin-bottom: 8px; }
+    .subtitle { font-size: 14px; color: #9aa0a6; margin-bottom: 28px; line-height: 1.6; }
+    strong { color: #e8eaed; }
+    ul { padding-left: 20px; font-size: 14px; color: #9aa0a6; line-height: 1.7; }
+    .nav { margin-top: 24px; display: flex; gap: 12px; }
+    .btn { display: inline-block; background: #7fff5f; color: #000; border: none; border-radius: 12px; padding: 14px 28px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; font-family: Inter, sans-serif; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-secondary { background: transparent; color: #9aa0a6; border: 1px solid #3C4043; }
+    .btn-secondary:hover { background: #2A2B2C; color: #e8eaed; }
+
+    /* Accordion */
+    .accordion { border-bottom: 1px solid #2A2B2C; }
+    .accordion-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      gap: 12px;
+      font-family: Inter, sans-serif;
+    }
+    .accordion-title { font-size: 15px; font-weight: 600; color: #E8EAED; line-height: 1.4; }
+    .accordion-icon {
+      color: #5F6368;
+      font-size: 20px;
+      font-weight: 300;
+      flex-shrink: 0;
+      display: inline-block;
+      line-height: 1;
+      transition: transform 0.2s;
+    }
+    .accordion-icon.open { transform: rotate(45deg); }
+    .accordion-body { display: none; padding-bottom: 16px; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .accordion-body.open { display: block; animation: slideUp 0.25s ease both; }
+    .wrap { animation: slideUp 0.3s ease both; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <span class="step">2. Onramp</span>
+    <h1>The On-Ramp</h1>
+    <p class="subtitle">This defines the conceptual "mental model" for a PCEP candidate.</p>
+
+    <div class="accordion">
+      <button class="accordion-btn" type="button" onclick="toggle(this)">
+        <span class="accordion-title">The Environment: How Python Speaks</span>
+        <span class="accordion-icon">+</span>
+      </button>
+      <div class="accordion-body">
+        <ul>
+          <li><strong>Interpreted vs. Compiled:</strong> Python is an interpreted language, meaning an interpreter executes your code line-by-line rather than translating the whole thing at once.</li>
+          <li><strong>The Rules:</strong> Lexis (the allowed vocabulary), Syntax (the grammar/arrangement), and Semantics (the actual logic/meaning).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion-btn" type="button" onclick="toggle(this)">
+        <span class="accordion-title">The Nouns: Data Types &amp; Literals</span>
+        <span class="accordion-icon">+</span>
+      </button>
+      <div class="accordion-body">
+        <ul>
+          <li><strong>Integers (int):</strong> Whole numbers (e.g., 5, -10).</li>
+          <li><strong>Floats (float):</strong> Numbers with decimals (e.g., 3.14).</li>
+          <li><strong>Strings (str):</strong> Text wrapped in quotes (e.g., "Hello").</li>
+          <li><strong>Booleans (bool):</strong> Logic values, either True or False.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion-btn" type="button" onclick="toggle(this)">
+        <span class="accordion-title">The Containers: Variables &amp; Collections</span>
+        <span class="accordion-icon">+</span>
+      </button>
+      <div class="accordion-body">
+        <ul>
+          <li><strong>Variables:</strong> Named slots in memory used to store data. They follow specific naming conventions and PEP-8 style rules.</li>
+          <li><strong>Lists:</strong> Ordered collections that can be changed (mutable).</li>
+          <li><strong>Tuples:</strong> Ordered collections that cannot be changed (immutable).</li>
+          <li><strong>Dictionaries:</strong> Key-value pairs used to organize labeled data.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <button class="accordion-btn" type="button" onclick="toggle(this)">
+        <span class="accordion-title">The Verbs: Operators &amp; Control Flow</span>
+        <span class="accordion-icon">+</span>
+      </button>
+      <div class="accordion-body">
+        <ul>
+          <li><strong>Operators:</strong> Tools for math (+, -, *, /), comparison (==, !=, &gt;, &lt;), and logic (and, or, not).</li>
+          <li><strong>Control Flow:</strong> The "decision-making" parts of code. Using if/else blocks to branch paths and for/while loops to repeat tasks.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="nav">
+      <a href="setup-step2.html" class="btn btn-secondary">← Back</a>
+      <a href="setup-step4.html" class="btn">Continue →</a>
+    </div>
+  </div>
+
+  <script>
+    function toggle(btn) {
+      const icon = btn.querySelector('.accordion-icon');
+      const body = btn.nextElementSibling;
+      const isOpen = body.classList.contains('open');
+      icon.classList.toggle('open', !isOpen);
+      body.classList.toggle('open', !isOpen);
+    }
+  </script>
+</body>
+</html>

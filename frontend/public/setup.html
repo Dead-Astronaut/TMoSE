@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>my.py — The Setup Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, sans-serif; background: #000; color: #e8eaed; padding: 24px 32px; line-height: 1.6; }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    .step { font-size: 13px; color: #7fff5f; font-weight: 500; margin-bottom: 8px; display: block; }
+    h1 { font-weight: 700; font-size: 28px; color: #E8EAED; margin-bottom: 4px; }
+    .subtitle { font-size: 14px; color: #9aa0a6; margin-bottom: 28px; line-height: 1.6; }
+    h2 { font-size: 17px; font-weight: 600; color: #E8EAED; margin: 24px 0 8px; }
+    p { font-size: 14px; color: #9aa0a6; margin-bottom: 8px; line-height: 1.6; }
+    strong { color: #e8eaed; }
+    .crucial { color: #7fff5f; }
+    code { background: #2A2B2C; padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+    a { color: #7fff5f; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Accordion */
+    .accordion { margin-bottom: 8px; border: 1px solid #2A2B2C; border-radius: 8px; overflow: hidden; }
+    .accordion-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #1A1B1C;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      gap: 12px;
+      font-family: Inter, sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: #9aa0a6;
+      transition: background 0.15s, color 0.15s;
+    }
+    .accordion-btn:hover { background: #2A2B2C; color: #e8eaed; }
+    .accordion-icon {
+      color: #5F6368;
+      font-size: 18px;
+      font-weight: 300;
+      flex-shrink: 0;
+      display: inline-block;
+      line-height: 1;
+      transition: transform 0.2s;
+    }
+    .accordion-icon.open { transform: rotate(45deg); }
+    .accordion-body { display: none; padding: 12px; border-top: 1px solid #2A2B2C; font-size: 14px; color: #9aa0a6; line-height: 1.6; }
+    .accordion-body.open { display: block; }
+
+    .nav { margin-top: 28px; display: flex; gap: 12px; }
+    .btn { display: inline-block; background: #7fff5f; color: #000; border: none; border-radius: 12px; padding: 14px 28px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; font-family: Inter, sans-serif; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.85; text-decoration: none; }
+    .btn-secondary { background: transparent; color: #9aa0a6; border: 1px solid #3C4043; }
+    .btn-secondary:hover { background: #2A2B2C; color: #e8eaed; }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .wrap { animation: slideUp 0.3s ease both; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <span class="step">1. Set Up</span>
+    <h1>The Setup Guide</h1>
+    <p class="subtitle">A step-by-step checklist to get your local environment ready for development.</p>
+
+    <h2>Install the Engine (Python)</h2>
+    <p><strong>Action:</strong> Download the latest version from <a href="https://python.org" target="_blank" rel="noopener">python.org</a>.</p>
+    <div class="accordion">
+      <button class="accordion-btn" type="button" onclick="toggle(this)">
+        Crucial steps &amp; details
+        <span class="accordion-icon">+</span>
+      </button>
+      <div class="accordion-body">
+        <p><strong class="crucial">Crucial Step:</strong> During installation, check the box that says "Add Python to PATH." This allows your computer to run Python commands from anywhere.</p>
+      </div>
+    </div>
+
+    <h2>Install the Cockpit (VS Code)</h2>
+    <p><strong>Action:</strong> Download and install Visual Studio Code from <a href="https://code.visualstudio.com" target="_blank" rel="noopener">code.visualstudio.com</a>.</p>
+    <div class="accordion">
+      <button class="accordion-btn" type="button" onclick="toggle(this)">
+        Crucial steps &amp; details
+        <span class="accordion-icon">+</span>
+      </button>
+      <div class="accordion-body">
+        <p><strong>The Bridge:</strong> Open VS Code, go to the Extensions view (the square icon on the left), and install the "Python" extension by Microsoft. This teaches VS Code how to read and run your Python files.</p>
+      </div>
+    </div>
+
+    <h2>The Hangar (GitHub) — Optional</h2>
+    <p><strong>Action:</strong> Create a free account at <a href="https://github.com" target="_blank" rel="noopener">github.com</a>.</p>
+    <div class="accordion">
+      <button class="accordion-btn" type="button" onclick="toggle(this)">
+        Why &amp; details
+        <span class="accordion-icon">+</span>
+      </button>
+      <div class="accordion-body">
+        <p><strong>Purpose:</strong> This is where you will eventually back up your code. You don't need to master this on Day 1, but having the account ready is the first step toward professional coding.</p>
+      </div>
+    </div>
+
+    <h2>The First Flight (Hello World)</h2>
+    <p><strong>Action:</strong> Create a new file in VS Code named hello.py.</p>
+    <div class="accordion">
+      <button class="accordion-btn" type="button" onclick="toggle(this)">
+        Code &amp; run steps
+        <span class="accordion-icon">+</span>
+      </button>
+      <div class="accordion-body">
+        <p><strong>Code:</strong> Type <code>print("Ready for PCEP!")</code>.</p>
+        <p style="margin-top: 8px;"><strong>Run:</strong> Click the Play button in the top-right corner. If you see that text in the terminal at the bottom, your environment is 100% ready.</p>
+      </div>
+    </div>
+
+    <div class="nav">
+      <a href="setup-step2.html" class="btn">Continue →</a>
+    </div>
+  </div>
+
+  <script>
+    function toggle(btn) {
+      const icon = btn.querySelector('.accordion-icon');
+      const body = btn.nextElementSibling;
+      const isOpen = body.classList.contains('open');
+      icon.classList.toggle('open', !isOpen);
+      body.classList.toggle('open', !isOpen);
+    }
+  </script>
+</body>
+</html>

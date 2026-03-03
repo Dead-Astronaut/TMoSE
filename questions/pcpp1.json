@@ -1,0 +1,311 @@
+{
+  "certification": "PCPP1",
+  "version": "1.0",
+  "questions": [
+    {
+      "id": "pcpp1-001",
+      "certification": "PCPP1",
+      "section": "1. Advanced OOP",
+      "objective": "1.1 Understand basic OOP terms",
+      "type": "multiple_choice",
+      "question_text": "What is the term for a blueprint that defines the properties and behaviours of objects?",
+      "code_snippet": null,
+      "options": ["Object", "Class", "Instance", "Method"],
+      "correct_answer": "Class",
+      "explanation": "A class is the blueprint or template. An object (or instance) is a concrete realisation of that class. The class defines what attributes and methods its instances will have.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-002",
+      "certification": "PCPP1",
+      "section": "1. Advanced OOP",
+      "objective": "1.1 Understand basic OOP terms",
+      "type": "code_snippet",
+      "question_text": "What does this code print?",
+      "code_snippet": "class Dog:\n    def __init__(self, name):\n        self.name = name\n\nd = Dog('Rex')\nprint(type(d).__name__)",
+      "options": ["Dog", "Rex", "d", "object"],
+      "correct_answer": "Dog",
+      "explanation": "type(d) returns the class of the instance, which is Dog. __name__ gives the string name of that class. This is basic introspection.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-003",
+      "certification": "PCPP1",
+      "section": "1. Advanced OOP",
+      "objective": "1.2 Python core syntax magic methods",
+      "type": "multiple_choice",
+      "question_text": "Which magic method is called when you use the + operator on a custom object?",
+      "code_snippet": null,
+      "options": ["__plus__", "__add__", "__sum__", "__concat__"],
+      "correct_answer": "__add__",
+      "explanation": "Python's data model maps operators to magic methods. __add__ is called for +, __sub__ for -, __mul__ for *, etc. Defining these lets your objects support standard Python operators.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-004",
+      "certification": "PCPP1",
+      "section": "1. Advanced OOP",
+      "objective": "1.2 Python core syntax magic methods",
+      "type": "code_snippet",
+      "question_text": "What does this print?",
+      "code_snippet": "class Vector:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n    def __str__(self):\n        return f'({self.x}, {self.y})'\n\nv = Vector(3, 4)\nprint(v)",
+      "options": ["(3, 4)", "Vector(3, 4)", "<Vector object>", "3 4"],
+      "correct_answer": "(3, 4)",
+      "explanation": "__str__ defines the human-readable string representation of an object. When you print(v), Python calls v.__str__() and prints the result.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-005",
+      "certification": "PCPP1",
+      "section": "1. Advanced OOP",
+      "objective": "1.3 Inheritance, polymorphism, and composition",
+      "type": "multiple_choice",
+      "question_text": "What is Method Resolution Order (MRO)?",
+      "code_snippet": null,
+      "options": [
+        "The order methods are defined in a class",
+        "The order Python searches classes to find a method",
+        "The order methods are called at runtime",
+        "The order of method parameters"
+      ],
+      "correct_answer": "The order Python searches classes to find a method",
+      "explanation": "MRO determines which class's method is called when using inheritance. Python uses the C3 linearisation algorithm. You can inspect it with ClassName.__mro__ or ClassName.mro().",
+      "difficulty": 2
+    },
+    {
+      "id": "pcpp1-006",
+      "certification": "PCPP1",
+      "section": "1. Advanced OOP",
+      "objective": "1.3 Inheritance, polymorphism, and composition",
+      "type": "code_snippet",
+      "question_text": "What does this print?",
+      "code_snippet": "class A:\n    def hello(self):\n        return 'A'\n\nclass B(A):\n    def hello(self):\n        return 'B'\n\nclass C(B):\n    pass\n\nprint(C().hello())",
+      "options": ["A", "B", "C", "Error"],
+      "correct_answer": "B",
+      "explanation": "C inherits from B, which inherits from A. C has no hello() method, so Python follows MRO: C → B → A. It finds hello() in B first and returns 'B'.",
+      "difficulty": 2
+    },
+    {
+      "id": "pcpp1-007",
+      "certification": "PCPP1",
+      "section": "1. Advanced OOP",
+      "objective": "1.4 Decorators and extended function argument syntax",
+      "type": "multiple_choice",
+      "question_text": "What does *args allow a function to accept?",
+      "code_snippet": null,
+      "options": [
+        "Keyword arguments only",
+        "Any number of positional arguments",
+        "A dictionary of arguments",
+        "Default argument values"
+      ],
+      "correct_answer": "Any number of positional arguments",
+      "explanation": "*args collects extra positional arguments into a tuple. **kwargs collects extra keyword arguments into a dictionary. Together they allow functions to accept any combination of arguments.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-008",
+      "certification": "PCPP1",
+      "section": "1. Advanced OOP",
+      "objective": "1.4 Decorators and extended function argument syntax",
+      "type": "code_snippet",
+      "question_text": "What does this print?",
+      "code_snippet": "def decorator(func):\n    def wrapper():\n        print('before')\n        func()\n        print('after')\n    return wrapper\n\n@decorator\ndef greet():\n    print('hello')\n\ngreet()",
+      "options": [
+        "hello",
+        "before\nhello\nafter",
+        "before\nafter",
+        "after\nhello\nbefore"
+      ],
+      "correct_answer": "before\nhello\nafter",
+      "explanation": "The decorator wraps greet(). When greet() is called, it actually calls wrapper(), which prints 'before', calls the original func() (printing 'hello'), then prints 'after'.",
+      "difficulty": 2
+    },
+    {
+      "id": "pcpp1-009",
+      "certification": "PCPP1",
+      "section": "1. Advanced OOP",
+      "objective": "1.5 Static and class methods",
+      "type": "multiple_choice",
+      "question_text": "What is the key difference between a @classmethod and a @staticmethod?",
+      "code_snippet": null,
+      "options": [
+        "classmethods can't access the class; staticmethods can",
+        "classmethods receive the class as the first argument; staticmethods receive nothing",
+        "staticmethods are faster than classmethods",
+        "There is no difference"
+      ],
+      "correct_answer": "classmethods receive the class as the first argument; staticmethods receive nothing",
+      "explanation": "@classmethod receives cls (the class itself) as the first argument, allowing access to class-level state. @staticmethod is just a regular function scoped inside a class — it receives no implicit first argument.",
+      "difficulty": 2
+    },
+    {
+      "id": "pcpp1-010",
+      "certification": "PCPP1",
+      "section": "1. Advanced OOP",
+      "objective": "1.7 Attribute encapsulation",
+      "type": "code_snippet",
+      "question_text": "What is printed?",
+      "code_snippet": "class Circle:\n    def __init__(self, radius):\n        self._radius = radius\n\n    @property\n    def radius(self):\n        return self._radius\n\n    @radius.setter\n    def radius(self, value):\n        if value < 0:\n            raise ValueError('Radius cannot be negative')\n        self._radius = value\n\nc = Circle(5)\nc.radius = 10\nprint(c.radius)",
+      "options": ["5", "10", "Error", "_radius"],
+      "correct_answer": "10",
+      "explanation": "The @property decorator creates a getter. The @radius.setter creates a setter. Setting c.radius = 10 calls the setter, which validates and stores the value. c.radius then calls the getter returning 10.",
+      "difficulty": 2
+    },
+    {
+      "id": "pcpp1-011",
+      "certification": "PCPP1",
+      "section": "2. Coding Conventions",
+      "objective": "2.1 PEP concepts",
+      "type": "multiple_choice",
+      "question_text": "What does PEP stand for?",
+      "code_snippet": null,
+      "options": [
+        "Python Enhancement Proposal",
+        "Python Execution Protocol",
+        "Python Environment Package",
+        "Python Extension Plugin"
+      ],
+      "correct_answer": "Python Enhancement Proposal",
+      "explanation": "PEP stands for Python Enhancement Proposal. PEPs are design documents for the Python community, describing new features, processes, or guidelines. PEP 8 is the style guide; PEP 20 is the Zen of Python.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-012",
+      "certification": "PCPP1",
+      "section": "2. Coding Conventions",
+      "objective": "2.2 PEP 8 guidelines",
+      "type": "multiple_choice",
+      "question_text": "According to PEP 8, what is the maximum recommended line length?",
+      "code_snippet": null,
+      "options": ["72 characters", "79 characters", "100 characters", "120 characters"],
+      "correct_answer": "79 characters",
+      "explanation": "PEP 8 recommends a maximum line length of 79 characters for code, and 72 for docstrings/comments. This ensures readability across different editors and side-by-side code views.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-013",
+      "certification": "PCPP1",
+      "section": "2. Coding Conventions",
+      "objective": "2.3 PEP 257 docstrings",
+      "type": "multiple_choice",
+      "question_text": "Which of these is a valid one-line docstring according to PEP 257?",
+      "code_snippet": null,
+      "options": [
+        "# Returns the sum of two numbers",
+        "\"\"\"Returns the sum of two numbers.\"\"\"",
+        "''' Returns the sum '''",
+        "__doc__ = 'Returns the sum'"
+      ],
+      "correct_answer": "\"\"\"Returns the sum of two numbers.\"\"\"",
+      "explanation": "PEP 257 specifies docstrings use triple double-quotes. One-liners fit on a single line with the closing quotes on the same line. The opening and closing \"\"\" should be on the same line for one-liners.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-014",
+      "certification": "PCPP1",
+      "section": "3. GUI Programming",
+      "objective": "3.1 Basic GUI concepts",
+      "type": "multiple_choice",
+      "question_text": "Which Python module is used to build GUI applications in the standard library?",
+      "code_snippet": null,
+      "options": ["PyQt", "tkinter", "wx", "kivy"],
+      "correct_answer": "tkinter",
+      "explanation": "tkinter is Python's standard GUI library — it's included with Python. PyQt, wx (wxPython), and Kivy are popular third-party alternatives, but tkinter requires no additional installation.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-015",
+      "certification": "PCPP1",
+      "section": "3. GUI Programming",
+      "objective": "3.2 Building simple GUI applications",
+      "type": "code_snippet",
+      "question_text": "What does this tkinter code do?",
+      "code_snippet": "import tkinter as tk\nroot = tk.Tk()\nroot.title('My App')\nlabel = tk.Label(root, text='Hello')\nlabel.pack()\nroot.mainloop()",
+      "options": [
+        "Prints 'Hello' to the terminal",
+        "Opens a window titled 'My App' with a 'Hello' label",
+        "Creates a button labelled 'Hello'",
+        "Raises an ImportError"
+      ],
+      "correct_answer": "Opens a window titled 'My App' with a 'Hello' label",
+      "explanation": "This is a minimal tkinter app. Tk() creates the main window, title() sets its title, Label() creates a text label, pack() adds it to the window, and mainloop() starts the event loop.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-016",
+      "certification": "PCPP1",
+      "section": "4. Network Programming",
+      "objective": "4.1 Basic network concepts",
+      "type": "multiple_choice",
+      "question_text": "What does REST stand for?",
+      "code_snippet": null,
+      "options": [
+        "Remote Execution and State Transfer",
+        "Representational State Transfer",
+        "Resource and Entity Service Transfer",
+        "Request State Transfer"
+      ],
+      "correct_answer": "Representational State Transfer",
+      "explanation": "REST (Representational State Transfer) is an architectural style for web APIs. RESTful APIs use HTTP methods (GET, POST, PUT, DELETE) to perform CRUD operations on resources identified by URLs.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-017",
+      "certification": "PCPP1",
+      "section": "4. Network Programming",
+      "objective": "4.2 Working with sockets",
+      "type": "multiple_choice",
+      "question_text": "Which HTTP method is conventionally used to retrieve data from a REST API?",
+      "code_snippet": null,
+      "options": ["POST", "PUT", "GET", "DELETE"],
+      "correct_answer": "GET",
+      "explanation": "In REST, GET retrieves data, POST creates new resources, PUT updates existing resources, and DELETE removes them. This is the CRUD pattern: Create=POST, Read=GET, Update=PUT, Delete=DELETE.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-018",
+      "certification": "PCPP1",
+      "section": "5. File Processing",
+      "objective": "5.1 Database programming",
+      "type": "multiple_choice",
+      "question_text": "Which Python module provides a lightweight embedded SQL database?",
+      "code_snippet": null,
+      "options": ["psycopg2", "sqlite3", "pymysql", "sqlalchemy"],
+      "correct_answer": "sqlite3",
+      "explanation": "sqlite3 is part of Python's standard library and provides an interface to SQLite — a serverless, file-based SQL database. It's ideal for local storage without needing a separate database server.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-019",
+      "certification": "PCPP1",
+      "section": "5. File Processing",
+      "objective": "5.2 Processing different file formats",
+      "type": "code_snippet",
+      "question_text": "What does this code do?",
+      "code_snippet": "import csv\n\nwith open('data.csv', 'r') as f:\n    reader = csv.DictReader(f)\n    for row in reader:\n        print(row['name'])",
+      "options": [
+        "Reads a CSV and prints all values",
+        "Reads a CSV and prints the 'name' column for each row",
+        "Writes a CSV with a 'name' column",
+        "Raises a KeyError"
+      ],
+      "correct_answer": "Reads a CSV and prints the 'name' column for each row",
+      "explanation": "csv.DictReader reads each row as a dictionary using the header row as keys. row['name'] accesses the value in the 'name' column for each row.",
+      "difficulty": 1
+    },
+    {
+      "id": "pcpp1-020",
+      "certification": "PCPP1",
+      "section": "1. Advanced OOP",
+      "objective": "1.10 Shallow and deep copy",
+      "type": "code_snippet",
+      "question_text": "What is printed?",
+      "code_snippet": "import copy\n\na = [[1, 2], [3, 4]]\nb = copy.copy(a)\nb[0][0] = 99\nprint(a[0][0])",
+      "options": ["1", "99", "Error", "None"],
+      "correct_answer": "99",
+      "explanation": "copy.copy() performs a shallow copy — b is a new list, but its elements still reference the same inner lists as a. Modifying b[0][0] modifies the shared inner list, so a[0][0] is also 99. Use copy.deepcopy() to avoid this.",
+      "difficulty": 3
+    }
+  ]
+}

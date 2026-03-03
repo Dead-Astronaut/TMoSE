@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>my.py — Step 2: Checklist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, sans-serif; background: #000; color: #e8eaed; padding: 24px 32px; line-height: 1.6; }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    .step { font-size: 13px; color: #7fff5f; font-weight: 500; margin-bottom: 8px; display: block; }
+    h1 { font-weight: 700; font-size: 28px; color: #E8EAED; margin-bottom: 4px; }
+    p { font-size: 14px; color: #9aa0a6; margin-bottom: 8px; }
+    .nav { margin-top: 24px; display: flex; gap: 12px; }
+    .btn { display: inline-block; background: #7fff5f; color: #000; border: none; border-radius: 12px; padding: 14px 28px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; font-family: Inter, sans-serif; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-secondary { background: transparent; color: #9aa0a6; border: 1px solid #3C4043; }
+    .btn-secondary:hover { background: #2A2B2C; color: #e8eaed; }
+
+    /* Checklist table */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; color: #9aa0a6; margin-top: 20px; }
+    th, td { text-align: left; padding: 8px 0; border-bottom: 1px solid #2A2B2C; }
+    th { color: #E8EAED; font-weight: 600; }
+    th:first-child { width: 40px; }
+    tr.clickable { cursor: pointer; transition: background 0.15s; }
+    tr.clickable:hover { background: #1E1F20; }
+    .check-box {
+      width: 20px; height: 20px;
+      border-radius: 5px;
+      border: 2px solid #3C3D3E;
+      background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .check-box.done { background: #7fff5f; border-color: #7fff5f; }
+    .check-box svg { display: none; }
+    .check-box.done svg { display: block; }
+    td.name { transition: color 0.15s; }
+    td.name.done { color: #7fff5f; text-decoration: line-through; font-weight: 500; }
+    td.status { transition: color 0.15s; font-weight: 400; }
+    td.status.done { color: #7fff5f; font-weight: 600; }
+    td.purpose.done { color: #5F6368; }
+
+    /* Confetti canvas */
+    #confetti-canvas {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .wrap { animation: slideUp 0.3s ease both; }
+  </style>
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+  <div class="wrap">
+    <span class="step">1. Set Up</span>
+    <h1>Checklist</h1>
+    <p>Click each row when you've completed it.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Component</th>
+          <th>Purpose</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="checklist-body">
+        <tr class="clickable" data-id="python">
+          <td style="padding: 12px 0;">
+            <div class="check-box" id="box-python">
+              <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                <path d="M1 5L4.5 8.5L11 1" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </td>
+          <td class="name" id="name-python" style="padding: 12px 0;">Python</td>
+          <td class="purpose" id="purpose-python" style="padding: 12px 0;">The Engine (Runs the code)</td>
+          <td class="status" id="status-python" style="padding: 12px 0;">[ ] Installed</td>
+        </tr>
+        <tr class="clickable" data-id="vscode">
+          <td style="padding: 12px 0;">
+            <div class="check-box" id="box-vscode">
+              <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                <path d="M1 5L4.5 8.5L11 1" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </td>
+          <td class="name" id="name-vscode" style="padding: 12px 0;">VS Code</td>
+          <td class="purpose" id="purpose-vscode" style="padding: 12px 0;">The Cockpit (Where you type)</td>
+          <td class="status" id="status-vscode" style="padding: 12px 0;">[ ] Installed</td>
+        </tr>
+        <tr class="clickable" data-id="extension">
+          <td style="padding: 12px 0;">
+            <div class="check-box" id="box-extension">
+              <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                <path d="M1 5L4.5 8.5L11 1" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </td>
+          <td class="name" id="name-extension" style="padding: 12px 0;">Python Extension</td>
+          <td class="purpose" id="purpose-extension" style="padding: 12px 0;">The Manual (Helps VS Code understand Python)</td>
+          <td class="status" id="status-extension" style="padding: 12px 0;">[ ] Installed</td>
+        </tr>
+        <tr class="clickable" data-id="github">
+          <td style="padding: 12px 0;">
+            <div class="check-box" id="box-github">
+              <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                <path d="M1 5L4.5 8.5L11 1" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </td>
+          <td class="name" id="name-github" style="padding: 12px 0;">GitHub Account</td>
+          <td class="purpose" id="purpose-github" style="padding: 12px 0;">The Hangar (Stores your progress)</td>
+          <td class="status" id="status-github" style="padding: 12px 0;">[ ] Ready</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="nav">
+      <a href="setup.html" class="btn btn-secondary">← Back</a>
+      <a href="setup-step3.html" class="btn">Continue →</a>
+    </div>
+  </div>
+
+  <script>
+    const COLORS = ['#7fff5f', '#34A853', '#F9AB00', '#4285F4', '#EA4335', '#E8EAED'];
+    const checked = new Set();
+
+    // Confetti
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    let particles = [];
+    let rafId = null;
+
+    function burst(cx, cy) {
+      for (let i = 0; i < 60; i++) {
+        const angle = (i / 60) * Math.PI * 2 + Math.random() * 0.4;
+        const speed = 180 + Math.random() * 140;
+        particles.push({
+          x: cx, y: cy,
+          vx: Math.cos(angle) * speed * 0.006,
+          vy: Math.sin(angle) * speed * 0.006 - 2,
+          size: 5 + Math.random() * 7,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          alpha: 1,
+          gravity: 0.08,
+          life: 1,
+        });
+      }
+      if (!rafId) animate();
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles = particles.filter(p => p.life > 0);
+      for (const p of particles) {
+        p.vy += p.gravity;
+        p.x += p.vx * 16;
+        p.y += p.vy * 16;
+        p.life -= 0.018;
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      if (particles.length > 0) {
+        rafId = requestAnimationFrame(animate);
+      } else {
+        rafId = null;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function toggle(id) {
+      const box = document.getElementById('box-' + id);
+      const name = document.getElementById('name-' + id);
+      const purpose = document.getElementById('purpose-' + id);
+      const status = document.getElementById('status-' + id);
+      const row = document.querySelector('[data-id="' + id + '"]');
+
+      if (checked.has(id)) {
+        checked.delete(id);
+        box.classList.remove('done');
+        name.classList.remove('done');
+        purpose.classList.remove('done');
+        status.classList.remove('done');
+        status.textContent = status.dataset.original;
+      } else {
+        checked.add(id);
+        box.classList.add('done');
+        name.classList.add('done');
+        purpose.classList.add('done');
+        status.classList.add('done');
+        status.dataset.original = status.dataset.original || status.textContent;
+        status.textContent = '✓ Done';
+
+        // Fire confetti from middle of screen
+        burst(window.innerWidth / 2, window.innerHeight / 2);
+      }
+    }
+
+    document.querySelectorAll('tr.clickable').forEach(row => {
+      row.addEventListener('click', () => toggle(row.dataset.id));
+    });
+  </script>
+</body>
+</html>
