@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { CertOverview } from './components/CertOverview'
+import { CustomOverview } from './components/CustomOverview'
+import { SessionNavigationHeader } from './components/SessionNavigationHeader'
 import { QuestionCard } from './components/QuestionCard'
 import { ProgressView } from './components/ProgressView'
 import { loadQuestions, getLocalQuestions } from './data/questions'
@@ -178,74 +180,17 @@ export default function App() {
       {/* ── Main content ────────────────────────────── */}
       <div className="app-main">
 
-        {/* Persistent header */}
-        <header className="app-nav">
-          <div className="app-nav-brand" />
-
-          {appState === 'session' && questions.length > 0 && (() => {
-            const answeredCount = Object.keys(answeredMap).length
-            const accuracy = answeredCount > 0
-              ? Math.round((totalCorrect / answeredCount) * 100)
-              : 0
-            return (
-              <div className="nav-stats" style={{ flex: 1, minWidth: 0 }}>
-                {/* Dots navigator */}
-                <div style={{ display: 'flex', gap: 5, overflowX: 'auto', overflowY: 'hidden', flex: 1, minWidth: 0, padding: '4px 6px' }}>
-                  {questions.map((_, i) => {
-                    const answered = answeredMap[i]
-                    const isCorrect = answered?.result?.is_correct
-                    const reachable = i <= farthestIndex
-                    const isCurrent = i === currentIndex
-                    const dotColor = !answered
-                      ? 'var(--app-border)'
-                      : isCorrect ? '#34a853' : '#ea4335'
-                    return (
-                      <div
-                        key={i}
-                        onClick={() => reachable && handleGoToQuestion(i)}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: 2,
-                          cursor: reachable ? 'pointer' : 'default',
-                          opacity: reachable ? 1 : 0.3,
-                          flexShrink: 0,
-                        }}
-                      >
-                        <div style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: dotColor,
-                          outline: isCurrent ? `2px solid ${dotColor === 'var(--app-border)' ? 'var(--app-text-muted)' : dotColor}` : 'none',
-                          outlineOffset: 2,
-                        }} />
-                        <span style={{ fontSize: 8, color: isCurrent ? 'var(--app-text)' : 'var(--app-text-muted)', fontWeight: isCurrent ? 700 : 400, lineHeight: 1 }}>
-                          {i + 1}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-                {answeredCount > 0 && (
-                  <span className="nav-stat-label">
-                    <span style={{
-                      color: accuracy >= 70 ? 'var(--app-success)' : accuracy >= 40 ? 'var(--app-warning)' : 'var(--app-error)',
-                      fontWeight: 600,
-                    }}>
-                      {accuracy}%
-                    </span>
-                    {' '}correct
-                  </span>
-                )}
-                <span className="nav-stat-label">
-                  Q<span className="text-app" style={{ fontWeight: 600 }}>{currentIndex + 1}</span>
-                </span>
-              </div>
-            )
-          })()}
-        </header>
+        {/* Session header — only shown during quiz */}
+        {appState === 'session' && questions.length > 0 && (
+          <SessionNavigationHeader
+            questions={questions}
+            answeredMap={answeredMap}
+            totalCorrect={totalCorrect}
+            currentIndex={currentIndex}
+            farthestIndex={farthestIndex}
+            onGoToQuestion={handleGoToQuestion}
+          />
+        )}
 
         {/* Home */}
         {appState === 'home' && (
@@ -267,63 +212,9 @@ export default function App() {
         )}
 
         {/* Custom overview */}
-        {appState === 'custom-overview' && customQuestions && (() => {
-          const customColor = '#F59E0B'
-          const certName = customQuestions[0].certification
-          return (
-            <div className="app-view-scroll">
-              <div className="animate-slide-up app-view" style={{ maxWidth: 580, margin: '0 auto' }}>
-                {/* Badge */}
-                <div style={{
-                  width: 120, height: 50,
-                  borderRadius: 'var(--shape-corner-lg)',
-                  background: `${customColor}0e`,
-                  border: `1.5px solid ${customColor}45`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginBottom: 18,
-                  fontFamily: '"JetBrains Mono", monospace',
-                  fontWeight: 700, fontSize: 18,
-                  color: customColor,
-                  letterSpacing: '-0.5px',
-                  animation: 'float 4s ease-in-out infinite, glow-pulse 2.5s ease-in-out infinite',
-                  boxShadow: `0 0 32px ${customColor}20`,
-                }}>
-                  Custom
-                </div>
-
-                {/* Title */}
-                <h1 className="heading-8 text-app" style={{ marginBottom: 28, textAlign: 'center' }}>
-                  {certName}
-                </h1>
-
-                {/* Stats */}
-                <div className="card" style={{ display: 'flex', gap: 32, marginBottom: 28, width: '100%', justifyContent: 'center' }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{
-                      fontSize: 'var(--4xl-size)',
-                      fontWeight: 700,
-                      color: customColor,
-                      fontFamily: '"JetBrains Mono", monospace',
-                      lineHeight: 1,
-                    }}>
-                      {customQuestions.length}
-                    </div>
-                    <div className="small text-app-muted" style={{ marginTop: 4 }}>questions ready</div>
-                  </div>
-                </div>
-
-                {/* CTA */}
-                <button
-                  onClick={startCustomSession}
-                  className="btn-primary"
-                  style={{ width: '100%', maxWidth: 340, padding: '14px 0', background: customColor, color: '#1a1a1a' }}
-                >
-                  Start {certName} Session →
-                </button>
-              </div>
-            </div>
-          )
-        })()}
+        {appState === 'custom-overview' && customQuestions && (
+          <CustomOverview questions={customQuestions} onStart={startCustomSession} />
+        )}
 
         {/* Progress */}
         {appState === 'progress' && (

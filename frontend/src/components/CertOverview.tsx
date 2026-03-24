@@ -15,8 +15,16 @@ export function CertOverview({ cert, onStart, questionCountByCert = {} }: CertOv
 
   return (
     <div
-      className="animate-slide-up app-view"
-      style={{ maxWidth: 580, margin: '0 auto' }}
+      className="animate-slide-up"
+      style={{
+        maxWidth: 580,
+        margin: '0 auto',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: 'var(--space-2xl)',
+      }}
     >
       {/* Badge */}
       <div style={{
