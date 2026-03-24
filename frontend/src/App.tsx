@@ -22,7 +22,7 @@ function randomSample<T>(arr: T[], n: number): T[] {
   return result
 }
 
-type AppState = 'home' | 'overview' | 'session' | 'complete' | 'progress'
+type AppState = 'home' | 'overview' | 'custom-overview' | 'session' | 'complete' | 'progress'
 
 export default function App() {
   const savedCertId = localStorage.getItem(STORAGE_KEY) ?? 'PCEP'
@@ -39,6 +39,7 @@ export default function App() {
   const [currentQuestionAnswered, setCurrentQuestionAnswered] = useState(false)
   const [allQuestions, setAllQuestions] = useState<Question[] | null>(null)
   const [customQuestions, setCustomQuestions] = useState<Question[] | null>(null)
+  const [isCustomSession, setIsCustomSession] = useState(false)
   const [answeredMap, setAnsweredMap] = useState<Record<number, { selected: string; result: AnswerResult }>>({})
   const [farthestIndex, setFarthestIndex] = useState(0)
 
@@ -83,8 +84,21 @@ export default function App() {
     setCurrentQuestionAnswered(false)
     setAnsweredMap({})
     setFarthestIndex(0)
+    setIsCustomSession(false)
     setAppState('session')
   }, [selectedCert.id, questionBank])
+
+  const startCustomSession = useCallback(() => {
+    const qs = customQuestions ?? []
+    setQuestions(randomSample(qs, Math.min(36, qs.length)))
+    setCurrentIndex(0)
+    setTotalCorrect(0)
+    setCurrentQuestionAnswered(false)
+    setAnsweredMap({})
+    setFarthestIndex(0)
+    setIsCustomSession(true)
+    setAppState('session')
+  }, [customQuestions])
 
   const handleAnswer = useCallback(async (answer: string): Promise<AnswerResult> => {
     const q = questions[currentIndex]
@@ -108,8 +122,9 @@ export default function App() {
   }, [questions, currentIndex, sessionId])
 
   const handleNext = useCallback(() => {
+    const sessionCertId = isCustomSession ? (customQuestions?.[0]?.certification ?? selectedCert.id) : selectedCert.id
     if (currentIndex + 1 >= questions.length) {
-      recordSession(selectedCert.id, totalCorrect, questions.length)
+      recordSession(sessionCertId, totalCorrect, questions.length)
       setAppState('complete')
     } else {
       const next = currentIndex + 1
@@ -117,7 +132,7 @@ export default function App() {
       setCurrentQuestionAnswered(next in answeredMap)
       setFarthestIndex(f => Math.max(f, next))
     }
-  }, [currentIndex, questions.length, selectedCert.id, totalCorrect, answeredMap])
+  }, [currentIndex, questions.length, selectedCert.id, totalCorrect, answeredMap, isCustomSession, customQuestions])
 
   const handleGoToQuestion = useCallback((index: number) => {
     if (index <= farthestIndex) {
@@ -139,11 +154,12 @@ export default function App() {
       try { await fetch(`${API_BASE}/sessions/${sessionId}`, { method: 'PATCH' }) } catch { /* silent */ }
     }
     const answeredCount = Object.keys(answeredMap).length
+    const sessionCertId = isCustomSession ? (customQuestions?.[0]?.certification ?? selectedCert.id) : selectedCert.id
     if (answeredCount > 0) {
-      recordSession(selectedCert.id, totalCorrect, answeredCount)
+      recordSession(sessionCertId, totalCorrect, answeredCount)
     }
-    setAppState('overview')
-  }, [sessionId, answeredMap, selectedCert.id, totalCorrect])
+    setAppState(isCustomSession ? 'custom-overview' : 'overview')
+  }, [sessionId, answeredMap, selectedCert.id, totalCorrect, isCustomSession, customQuestions])
 
   return (
     <div className="app-root">
@@ -155,7 +171,7 @@ export default function App() {
         questionCountByCert={questionCountByCert}
         onShowProgress={() => setAppState('progress')}
         onGoHome={() => setAppState('home')}
-        onLoadCustomQuestions={(qs) => setCustomQuestions(qs)}
+        onLoadCustomQuestions={(qs) => { setCustomQuestions(qs); setAppState('custom-overview') }}
         activeView={appState}
       />
 
@@ -250,6 +266,65 @@ export default function App() {
           </div>
         )}
 
+        {/* Custom overview */}
+        {appState === 'custom-overview' && customQuestions && (() => {
+          const customColor = '#F59E0B'
+          const certName = customQuestions[0].certification
+          return (
+            <div className="app-view-scroll">
+              <div className="animate-slide-up app-view" style={{ maxWidth: 580, margin: '0 auto' }}>
+                {/* Badge */}
+                <div style={{
+                  width: 120, height: 50,
+                  borderRadius: 'var(--shape-corner-lg)',
+                  background: `${customColor}0e`,
+                  border: `1.5px solid ${customColor}45`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginBottom: 18,
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontWeight: 700, fontSize: 18,
+                  color: customColor,
+                  letterSpacing: '-0.5px',
+                  animation: 'float 4s ease-in-out infinite, glow-pulse 2.5s ease-in-out infinite',
+                  boxShadow: `0 0 32px ${customColor}20`,
+                }}>
+                  Custom
+                </div>
+
+                {/* Title */}
+                <h1 className="heading-8 text-app" style={{ marginBottom: 28, textAlign: 'center' }}>
+                  {certName}
+                </h1>
+
+                {/* Stats */}
+                <div className="card" style={{ display: 'flex', gap: 32, marginBottom: 28, width: '100%', justifyContent: 'center' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                      fontSize: 'var(--4xl-size)',
+                      fontWeight: 700,
+                      color: customColor,
+                      fontFamily: '"JetBrains Mono", monospace',
+                      lineHeight: 1,
+                    }}>
+                      {customQuestions.length}
+                    </div>
+                    <div className="small text-app-muted" style={{ marginTop: 4 }}>questions ready</div>
+                  </div>
+                </div>
+
+                {/* CTA */}
+                <button
+                  onClick={startCustomSession}
+                  className="btn-primary"
+                  style={{ width: '100%', maxWidth: 340, padding: '14px 0', background: customColor, color: '#1a1a1a' }}
+                >
+                  Start {certName} Session →
+                </button>
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Progress */}
         {appState === 'progress' && (
           <div className="app-view-scroll">
@@ -338,6 +413,9 @@ export default function App() {
           const accuracy = questions.length > 0
             ? Math.round((totalCorrect / questions.length) * 100)
             : 0
+          const displayCertName = isCustomSession
+            ? (customQuestions?.[0]?.certification ?? 'Custom')
+            : selectedCert.name
           return (
             <div className="app-view animate-slide-up">
               <div style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
@@ -348,7 +426,7 @@ export default function App() {
                   Session Complete
                 </h2>
                 <p className="caption text-app-2" style={{ marginBottom: 28 }}>
-                  {selectedCert.name} · {questions.length} questions
+                  {displayCertName} · {questions.length} questions
                 </p>
 
                 <div className="card" style={{ marginBottom: 24 }}>
@@ -370,11 +448,19 @@ export default function App() {
                 </div>
 
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button onClick={startSession} className="btn-primary" style={{ flex: 1, padding: '13px 0' }}>
+                  <button
+                    onClick={isCustomSession ? startCustomSession : startSession}
+                    className="btn-primary"
+                    style={{ flex: 1, padding: '13px 0' }}
+                  >
                     Practice Again
                   </button>
-                  <button onClick={() => setAppState('overview')} className="btn-secondary" style={{ flex: 1, padding: '13px 0' }}>
-                    Choose Cert
+                  <button
+                    onClick={() => setAppState(isCustomSession ? 'custom-overview' : 'overview')}
+                    className="btn-secondary"
+                    style={{ flex: 1, padding: '13px 0' }}
+                  >
+                    {isCustomSession ? 'Back' : 'Choose Cert'}
                   </button>
                 </div>
               </div>

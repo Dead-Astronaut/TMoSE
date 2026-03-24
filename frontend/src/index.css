@@ -1170,3 +1170,10 @@ pre, code, .font-mono {
   0%   { background-position: -200% 0; }
   100% { background-position:  200% 0; }
 }
+
+@keyframes toast-in-out {
+  0%          { opacity: 0; }
+  10%         { opacity: 1; }
+  80%         { opacity: 1; }
+  100%        { opacity: 0; }
+}

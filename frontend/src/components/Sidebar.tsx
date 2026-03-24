@@ -10,7 +10,7 @@ interface SidebarProps {
   onShowProgress?: () => void
   onGoHome?: () => void
   onLoadCustomQuestions?: (questions: Question[]) => void
-  activeView?: 'home' | 'overview' | 'progress' | 'session' | 'complete'
+  activeView?: 'home' | 'overview' | 'custom-overview' | 'progress' | 'session' | 'complete'
 }
 
 const W_OPEN = 256
@@ -24,6 +24,13 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
   const [customExpanded, setCustomExpanded] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function showError(msg: string) {
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current)
+    setLoadError(msg)
+    errorTimerRef.current = setTimeout(() => setLoadError(null), 5000)
+  }
 
   function validateQuestion(q: unknown, index: number): string | null {
     if (!q || typeof q !== 'object') return `Item ${index}: not an object`
@@ -51,23 +58,23 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
       try {
         const parsed: unknown = JSON.parse(ev.target?.result as string)
         if (!Array.isArray(parsed)) {
-          setLoadError('JSON must be an array of question objects')
+          showError('JSON must be an array of question objects')
           return
         }
         if (parsed.length === 0) {
-          setLoadError('File contains no questions')
+          showError('File contains no questions')
           return
         }
         for (let i = 0; i < parsed.length; i++) {
           const err = validateQuestion(parsed[i], i + 1)
-          if (err) { setLoadError(err); return }
+          if (err) { showError(err); return }
         }
         onLoadCustomQuestions?.(parsed as Question[])
       } catch {
-        setLoadError('File is not valid JSON')
+        showError('File is not valid JSON')
       }
     }
-    reader.onerror = () => setLoadError('Could not read file')
+    reader.onerror = () => showError('Could not read file')
     reader.readAsText(file)
   }
 
@@ -355,6 +362,7 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
                   fontSize: 11,
                   lineHeight: 1.4,
                   wordBreak: 'break-word',
+                  animation: 'toast-in-out 5s ease forwards',
                 }}>
                   {loadError}
                 </div>
@@ -388,6 +396,28 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
                   Load
                 </button>
               </div>
+              {loadError && (
+                <div
+                  title={loadError}
+                  style={{
+                    margin: '3px 0 2px 14px',
+                    padding: '3px 5px',
+                    borderRadius: 'var(--shape-corner-sm)',
+                    background: 'rgba(234,67,53,0.12)',
+                    border: '1px solid rgba(234,67,53,0.35)',
+                    color: '#ea4335',
+                    fontSize: 9,
+                    lineHeight: 1.3,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: 80,
+                    animation: 'toast-in-out 5s ease forwards',
+                  }}
+                >
+                  ⚠ Error
+                </div>
+              )}
             </div>
           )}
         </div>

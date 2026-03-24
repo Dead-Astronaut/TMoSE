@@ -20,7 +20,7 @@ export function CertOverview({ cert, onStart, questionCountByCert = {} }: CertOv
     >
       {/* Badge */}
       <div style={{
-        width: 80, height: 80,
+        width: 120, height: 50,
         borderRadius: 'var(--shape-corner-lg)',
         background: `${color}0e`,
         border: `1.5px solid ${color}45`,
