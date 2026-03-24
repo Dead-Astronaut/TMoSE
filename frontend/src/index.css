@@ -855,7 +855,7 @@ ol.template-content-list { list-style-type: decimal; }
 }
 
 .sidebar-header {
-  height: 56px;
+  height: var(--nav-height);
   display: flex;
   align-items: center;
   padding: 0 var(--space-md);
@@ -1169,4 +1169,11 @@ pre, code, .font-mono {
 @keyframes shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position:  200% 0; }
+}
+
+@keyframes toast-in-out {
+  0%          { opacity: 0; }
+  10%         { opacity: 1; }
+  80%         { opacity: 1; }
+  100%        { opacity: 0; }
 }

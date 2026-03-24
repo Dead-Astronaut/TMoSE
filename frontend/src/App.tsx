@@ -1,16 +1,16 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { CertOverview } from './components/CertOverview'
+import { CustomOverview } from './components/CustomOverview'
+import { SessionNavigationHeader } from './components/SessionNavigationHeader'
 import { QuestionCard } from './components/QuestionCard'
 import { ProgressView } from './components/ProgressView'
-import { OnrampContent } from './components/OnrampContent'
 import { loadQuestions, getLocalQuestions } from './data/questions'
 import { recordSession } from './data/progress'
 import { getCertById } from './data/certifications'
 import type { CertInfo } from './data/certifications'
 import type { Question, AnswerResult } from './types'
 
-const API_BASE = '/api'
 const STORAGE_KEY = 'tmose_selected_cert'
 
 function randomSample<T>(arr: T[], n: number): T[] {
@@ -23,7 +23,7 @@ function randomSample<T>(arr: T[], n: number): T[] {
   return result
 }
 
-type AppState = 'home' | 'onramp' | 'overview' | 'session' | 'complete' | 'progress'
+type AppState = 'home' | 'overview' | 'custom-overview' | 'session' | 'complete' | 'progress'
 
 export default function App() {
   const savedCertId = localStorage.getItem(STORAGE_KEY) ?? 'PCEP'
@@ -31,15 +31,15 @@ export default function App() {
     () => getCertById(savedCertId) ?? getCertById('PCEP')!
   )
   const [appState, setAppState] = useState<AppState>(() => {
-    if (typeof window !== 'undefined' && window.location.search.includes('view=onramp')) return 'onramp'
     return 'home'
   })
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [totalCorrect, setTotalCorrect] = useState(0)
-  const [sessionId, setSessionId] = useState<string | null>(null)
   const [currentQuestionAnswered, setCurrentQuestionAnswered] = useState(false)
   const [allQuestions, setAllQuestions] = useState<Question[] | null>(null)
+  const [customQuestions, setCustomQuestions] = useState<Question[] | null>(null)
+  const [isCustomSession, setIsCustomSession] = useState(false)
   const [answeredMap, setAnsweredMap] = useState<Record<number, { selected: string; result: AnswerResult }>>({})
   const [farthestIndex, setFarthestIndex] = useState(0)
 
@@ -64,19 +64,7 @@ export default function App() {
 
   const goToCertifications = () => setAppState('overview')
 
-  const startSession = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_BASE}/sessions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ certification: selectedCert.id }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setSessionId(data.session_id ?? data.id)
-      }
-    } catch { /* offline */ }
-
+  const startSession = useCallback(() => {
     const certQs = questionBank.filter(q => q.certification === selectedCert.id)
     setQuestions(randomSample(certQs.length > 0 ? certQs : questionBank, 36))
     setCurrentIndex(0)
@@ -84,33 +72,36 @@ export default function App() {
     setCurrentQuestionAnswered(false)
     setAnsweredMap({})
     setFarthestIndex(0)
+    setIsCustomSession(false)
     setAppState('session')
   }, [selectedCert.id, questionBank])
 
-  const handleAnswer = useCallback(async (answer: string): Promise<AnswerResult> => {
+  const startCustomSession = useCallback(() => {
+    const qs = customQuestions ?? []
+    setQuestions(randomSample(qs, Math.min(36, qs.length)))
+    setCurrentIndex(0)
+    setTotalCorrect(0)
+    setCurrentQuestionAnswered(false)
+    setAnsweredMap({})
+    setFarthestIndex(0)
+    setIsCustomSession(true)
+    setAppState('session')
+  }, [customQuestions])
+
+  const handleAnswer = useCallback((answer: string): AnswerResult => {
     const q = questions[currentIndex]
-    let finalResult: AnswerResult | null = null
-    try {
-      const res = await fetch(`${API_BASE}/answers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question_id: q.id, session_id: sessionId ?? 'local', user_answer: answer }),
-      })
-      if (res.ok) finalResult = await res.json()
-    } catch { /* offline */ }
-    if (!finalResult) {
-      const isCorrect = answer === q.correct_answer
-      finalResult = { is_correct: isCorrect, explanation: q.explanation, correct_answer: q.correct_answer }
-    }
-    if (finalResult.is_correct) setTotalCorrect(c => c + 1)
+    const isCorrect = answer === q.correct_answer
+    const result: AnswerResult = { is_correct: isCorrect, explanation: q.explanation, correct_answer: q.correct_answer }
+    if (isCorrect) setTotalCorrect(c => c + 1)
     setCurrentQuestionAnswered(true)
-    setAnsweredMap(m => ({ ...m, [currentIndex]: { selected: answer, result: finalResult! } }))
-    return finalResult
-  }, [questions, currentIndex, sessionId])
+    setAnsweredMap(m => ({ ...m, [currentIndex]: { selected: answer, result } }))
+    return result
+  }, [questions, currentIndex])
 
   const handleNext = useCallback(() => {
+    const sessionCertId = isCustomSession ? (customQuestions?.[0]?.certification ?? selectedCert.id) : selectedCert.id
     if (currentIndex + 1 >= questions.length) {
-      recordSession(selectedCert.id, totalCorrect, questions.length)
+      recordSession(sessionCertId, totalCorrect, questions.length)
       setAppState('complete')
     } else {
       const next = currentIndex + 1
@@ -118,7 +109,7 @@ export default function App() {
       setCurrentQuestionAnswered(next in answeredMap)
       setFarthestIndex(f => Math.max(f, next))
     }
-  }, [currentIndex, questions.length, selectedCert.id, totalCorrect, answeredMap])
+  }, [currentIndex, questions.length, selectedCert.id, totalCorrect, answeredMap, isCustomSession, customQuestions])
 
   const handleGoToQuestion = useCallback((index: number) => {
     if (index <= farthestIndex) {
@@ -135,16 +126,14 @@ export default function App() {
     }
   }, [currentIndex, answeredMap])
 
-  const handleEndSession = useCallback(async () => {
-    if (sessionId) {
-      try { await fetch(`${API_BASE}/sessions/${sessionId}`, { method: 'PATCH' }) } catch { /* silent */ }
-    }
+  const handleEndSession = useCallback(() => {
     const answeredCount = Object.keys(answeredMap).length
+    const sessionCertId = isCustomSession ? (customQuestions?.[0]?.certification ?? selectedCert.id) : selectedCert.id
     if (answeredCount > 0) {
-      recordSession(selectedCert.id, totalCorrect, answeredCount)
+      recordSession(sessionCertId, totalCorrect, answeredCount)
     }
-    setAppState('overview')
-  }, [sessionId, answeredMap, selectedCert.id, totalCorrect])
+    setAppState(isCustomSession ? 'custom-overview' : 'overview')
+  }, [answeredMap, selectedCert.id, totalCorrect, isCustomSession, customQuestions])
 
   return (
     <div className="app-root">
@@ -155,88 +144,40 @@ export default function App() {
         onSelectCert={handleSelectCert}
         questionCountByCert={questionCountByCert}
         onShowProgress={() => setAppState('progress')}
-        onShowSetUp={() => { window.location.href = '/setup.html' }}
-        onShowOnramp={() => setAppState('onramp')}
-        onShowZen={() => { window.location.href = '/setup-step4.html' }}
         onGoHome={() => setAppState('home')}
+        onLoadCustomQuestions={(qs) => { setCustomQuestions(qs); setAppState('custom-overview') }}
         activeView={appState}
       />
 
       {/* ── Main content ────────────────────────────── */}
       <div className="app-main">
 
-        {/* Persistent header */}
-        <header className="app-nav">
-          <div className="app-nav-brand" />
-
-          {appState === 'session' && questions.length > 0 && (() => {
-            const answeredCount = Object.keys(answeredMap).length
-            const accuracy = answeredCount > 0
-              ? Math.round((totalCorrect / answeredCount) * 100)
-              : 0
-            return (
-              <div className="nav-stats" style={{ flex: 1, minWidth: 0 }}>
-                {/* Dots navigator */}
-                <div style={{ display: 'flex', gap: 5, overflowX: 'auto', overflowY: 'hidden', flex: 1, minWidth: 0, padding: '4px 6px' }}>
-                  {questions.map((_, i) => {
-                    const answered = answeredMap[i]
-                    const isCorrect = answered?.result?.is_correct
-                    const reachable = i <= farthestIndex
-                    const isCurrent = i === currentIndex
-                    const dotColor = !answered
-                      ? 'var(--app-border)'
-                      : isCorrect ? '#34a853' : '#ea4335'
-                    return (
-                      <div
-                        key={i}
-                        onClick={() => reachable && handleGoToQuestion(i)}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: 2,
-                          cursor: reachable ? 'pointer' : 'default',
-                          opacity: reachable ? 1 : 0.3,
-                          flexShrink: 0,
-                        }}
-                      >
-                        <div style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: dotColor,
-                          outline: isCurrent ? `2px solid ${dotColor === 'var(--app-border)' ? 'var(--app-text-muted)' : dotColor}` : 'none',
-                          outlineOffset: 2,
-                        }} />
-                        <span style={{ fontSize: 8, color: isCurrent ? 'var(--app-text)' : 'var(--app-text-muted)', fontWeight: isCurrent ? 700 : 400, lineHeight: 1 }}>
-                          {i + 1}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-                {answeredCount > 0 && (
-                  <span className="nav-stat-label">
-                    <span style={{
-                      color: accuracy >= 70 ? 'var(--app-success)' : accuracy >= 40 ? 'var(--app-warning)' : 'var(--app-error)',
-                      fontWeight: 600,
-                    }}>
-                      {accuracy}%
-                    </span>
-                    {' '}correct
-                  </span>
-                )}
-                <span className="nav-stat-label">
-                  Q<span className="text-app" style={{ fontWeight: 600 }}>{currentIndex + 1}</span>
-                </span>
-              </div>
-            )
-          })()}
-        </header>
+        {/* Session header — only shown during quiz */}
+        {appState === 'session' && questions.length > 0 && (
+          <SessionNavigationHeader
+            questions={questions}
+            answeredMap={answeredMap}
+            totalCorrect={totalCorrect}
+            currentIndex={currentIndex}
+            farthestIndex={farthestIndex}
+            onGoToQuestion={handleGoToQuestion}
+          />
+        )}
 
         {/* Home */}
         {appState === 'home' && (
           <div className="app-view">
+            <img
+              src="/media/baner.jpg"
+              alt="Python Certification Practice"
+              style={{
+                width: '100%',
+                maxWidth: 800,
+                borderRadius: 'var(--shape-corner-lg)',
+                marginBottom: 24,
+                display: 'block',
+              }}
+            />
             <h1 className="heading-7 text-app" style={{ marginBottom: 12, textAlign: 'center' }}>
               Python Certification Practice
             </h1>
@@ -246,25 +187,16 @@ export default function App() {
           </div>
         )}
 
-{/* 2. Onramp */}
-        {appState === 'onramp' && (
-          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 'var(--space-lg) var(--space-2xl)' }}>
-              <OnrampContent />
-            </div>
-            <div className="section-footer">
-              <button onClick={goToCertifications} className="btn-primary">
-                Choose certification →
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Overview */}
         {appState === 'overview' && (
           <div className="app-view-scroll">
             <CertOverview cert={selectedCert} onStart={startSession} questionCountByCert={questionCountByCert} />
           </div>
+        )}
+
+        {/* Custom overview */}
+        {appState === 'custom-overview' && customQuestions && (
+          <CustomOverview questions={customQuestions} onStart={startCustomSession} />
         )}
 
         {/* Progress */}
@@ -355,6 +287,9 @@ export default function App() {
           const accuracy = questions.length > 0
             ? Math.round((totalCorrect / questions.length) * 100)
             : 0
+          const displayCertName = isCustomSession
+            ? (customQuestions?.[0]?.certification ?? 'Custom')
+            : selectedCert.name
           return (
             <div className="app-view animate-slide-up">
               <div style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
@@ -365,7 +300,7 @@ export default function App() {
                   Session Complete
                 </h2>
                 <p className="caption text-app-2" style={{ marginBottom: 28 }}>
-                  {selectedCert.name} · {questions.length} questions
+                  {displayCertName} · {questions.length} questions
                 </p>
 
                 <div className="card" style={{ marginBottom: 24 }}>
@@ -387,11 +322,19 @@ export default function App() {
                 </div>
 
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button onClick={startSession} className="btn-primary" style={{ flex: 1, padding: '13px 0' }}>
+                  <button
+                    onClick={isCustomSession ? startCustomSession : startSession}
+                    className="btn-primary"
+                    style={{ flex: 1, padding: '13px 0' }}
+                  >
                     Practice Again
                   </button>
-                  <button onClick={() => setAppState('overview')} className="btn-secondary" style={{ flex: 1, padding: '13px 0' }}>
-                    Choose Cert
+                  <button
+                    onClick={() => setAppState(isCustomSession ? 'custom-overview' : 'overview')}
+                    className="btn-secondary"
+                    style={{ flex: 1, padding: '13px 0' }}
+                  >
+                    {isCustomSession ? 'Back' : 'Choose Cert'}
                   </button>
                 </div>
               </div>
