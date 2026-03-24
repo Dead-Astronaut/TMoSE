@@ -9,7 +9,7 @@ interface QuestionCardProps {
   question: Question
   questionNumber: number
   totalCorrect: number
-  onAnswer: (answer: string) => Promise<AnswerResult>
+  onAnswer: (answer: string) => AnswerResult
   onNext: () => void
   initialAnswerState?: { selected: string; result: AnswerResult }
 }
@@ -36,28 +36,15 @@ export function QuestionCard({ question, onAnswer, onNext, initialAnswerState }:
     setTimeout(() => setRevealed(true), 50)
   }, [])
 
-  const handleSelect = async (option: string) => {
+  const handleSelect = (option: string) => {
     if (result || loading) return
     setSelected(option)
     setLoading(true)
-    try {
-      const res = await onAnswer(option)
-      setResult(res)
-      if (res.is_correct) setShowExplosion(true)
-      else setPopupOpen(true)
-    } catch {
-      const isCorrect = option === question.correct_answer
-      const fallback = {
-        is_correct: isCorrect,
-        explanation: question.explanation,
-        correct_answer: question.correct_answer,
-      }
-      setResult(fallback)
-      if (isCorrect) setShowExplosion(true)
-      else setPopupOpen(true)
-    } finally {
-      setLoading(false)
-    }
+    const res = onAnswer(option)
+    setResult(res)
+    if (res.is_correct) setShowExplosion(true)
+    else setPopupOpen(true)
+    setLoading(false)
   }
 
   const getOptionState = (option: string) => {

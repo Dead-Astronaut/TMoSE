@@ -11,7 +11,6 @@ import { getCertById } from './data/certifications'
 import type { CertInfo } from './data/certifications'
 import type { Question, AnswerResult } from './types'
 
-const API_BASE = '/api'
 const STORAGE_KEY = 'tmose_selected_cert'
 
 function randomSample<T>(arr: T[], n: number): T[] {
@@ -37,7 +36,6 @@ export default function App() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [totalCorrect, setTotalCorrect] = useState(0)
-  const [sessionId, setSessionId] = useState<string | null>(null)
   const [currentQuestionAnswered, setCurrentQuestionAnswered] = useState(false)
   const [allQuestions, setAllQuestions] = useState<Question[] | null>(null)
   const [customQuestions, setCustomQuestions] = useState<Question[] | null>(null)
@@ -66,19 +64,7 @@ export default function App() {
 
   const goToCertifications = () => setAppState('overview')
 
-  const startSession = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_BASE}/sessions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ certification: selectedCert.id }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setSessionId(data.session_id ?? data.id)
-      }
-    } catch { /* offline */ }
-
+  const startSession = useCallback(() => {
     const certQs = questionBank.filter(q => q.certification === selectedCert.id)
     setQuestions(randomSample(certQs.length > 0 ? certQs : questionBank, 36))
     setCurrentIndex(0)
@@ -102,26 +88,15 @@ export default function App() {
     setAppState('session')
   }, [customQuestions])
 
-  const handleAnswer = useCallback(async (answer: string): Promise<AnswerResult> => {
+  const handleAnswer = useCallback((answer: string): AnswerResult => {
     const q = questions[currentIndex]
-    let finalResult: AnswerResult | null = null
-    try {
-      const res = await fetch(`${API_BASE}/answers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question_id: q.id, session_id: sessionId ?? 'local', user_answer: answer }),
-      })
-      if (res.ok) finalResult = await res.json()
-    } catch { /* offline */ }
-    if (!finalResult) {
-      const isCorrect = answer === q.correct_answer
-      finalResult = { is_correct: isCorrect, explanation: q.explanation, correct_answer: q.correct_answer }
-    }
-    if (finalResult.is_correct) setTotalCorrect(c => c + 1)
+    const isCorrect = answer === q.correct_answer
+    const result: AnswerResult = { is_correct: isCorrect, explanation: q.explanation, correct_answer: q.correct_answer }
+    if (isCorrect) setTotalCorrect(c => c + 1)
     setCurrentQuestionAnswered(true)
-    setAnsweredMap(m => ({ ...m, [currentIndex]: { selected: answer, result: finalResult! } }))
-    return finalResult
-  }, [questions, currentIndex, sessionId])
+    setAnsweredMap(m => ({ ...m, [currentIndex]: { selected: answer, result } }))
+    return result
+  }, [questions, currentIndex])
 
   const handleNext = useCallback(() => {
     const sessionCertId = isCustomSession ? (customQuestions?.[0]?.certification ?? selectedCert.id) : selectedCert.id
@@ -151,17 +126,14 @@ export default function App() {
     }
   }, [currentIndex, answeredMap])
 
-  const handleEndSession = useCallback(async () => {
-    if (sessionId) {
-      try { await fetch(`${API_BASE}/sessions/${sessionId}`, { method: 'PATCH' }) } catch { /* silent */ }
-    }
+  const handleEndSession = useCallback(() => {
     const answeredCount = Object.keys(answeredMap).length
     const sessionCertId = isCustomSession ? (customQuestions?.[0]?.certification ?? selectedCert.id) : selectedCert.id
     if (answeredCount > 0) {
       recordSession(sessionCertId, totalCorrect, answeredCount)
     }
     setAppState(isCustomSession ? 'custom-overview' : 'overview')
-  }, [sessionId, answeredMap, selectedCert.id, totalCorrect, isCustomSession, customQuestions])
+  }, [answeredMap, selectedCert.id, totalCorrect, isCustomSession, customQuestions])
 
   return (
     <div className="app-root">
