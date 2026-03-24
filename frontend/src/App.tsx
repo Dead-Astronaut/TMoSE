@@ -167,6 +167,17 @@ export default function App() {
         {/* Home */}
         {appState === 'home' && (
           <div className="app-view">
+            <img
+              src="/media/baner.jpg"
+              alt="Python Certification Practice"
+              style={{
+                width: '100%',
+                maxWidth: 800,
+                borderRadius: 'var(--shape-corner-lg)',
+                marginBottom: 24,
+                display: 'block',
+              }}
+            />
             <h1 className="heading-7 text-app" style={{ marginBottom: 12, textAlign: 'center' }}>
               Python Certification Practice
             </h1>
