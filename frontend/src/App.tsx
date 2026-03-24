@@ -11,7 +11,7 @@ import type { CertInfo } from './data/certifications'
 import type { Question, AnswerResult } from './types'
 
 const API_BASE = '/api'
-const STORAGE_KEY = 'mypy_selected_cert'
+const STORAGE_KEY = 'tmose_selected_cert'
 
 function randomSample<T>(arr: T[], n: number): T[] {
   const pool = [...arr]

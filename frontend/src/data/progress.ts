@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'mypy_progress'
+const STORAGE_KEY = 'tmose_progress'
 
 export interface SessionRecord {
   certId: string
