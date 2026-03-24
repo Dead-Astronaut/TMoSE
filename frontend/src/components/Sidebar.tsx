@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { TRACKS } from '../data/certifications'
 import type { CertInfo } from '../data/certifications'
+import type { Question } from '../types'
 
 interface SidebarProps {
   selectedCertId: string
@@ -8,7 +9,7 @@ interface SidebarProps {
   questionCountByCert?: Record<string, number>
   onShowProgress?: () => void
   onGoHome?: () => void
-  onLoadCustomQuestions?: () => void
+  onLoadCustomQuestions?: (questions: Question[]) => void
   activeView?: 'home' | 'overview' | 'progress' | 'session' | 'complete'
 }
 
@@ -21,6 +22,59 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
     new Set(TRACKS.map(t => t.id))
   )
   const [customExpanded, setCustomExpanded] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function validateQuestion(q: unknown, index: number): string | null {
+    if (!q || typeof q !== 'object') return `Item ${index}: not an object`
+    const obj = q as Record<string, unknown>
+    const requiredStrings = ['id', 'certification', 'section', 'objective', 'type', 'question_text', 'correct_answer', 'explanation']
+    for (const key of requiredStrings) {
+      if (typeof obj[key] !== 'string') return `Item ${index}: "${key}" must be a string`
+    }
+    if (obj.code_snippet !== null && typeof obj.code_snippet !== 'string')
+      return `Item ${index}: "code_snippet" must be a string or null`
+    if (!Array.isArray(obj.options) || obj.options.some((o: unknown) => typeof o !== 'string'))
+      return `Item ${index}: "options" must be an array of strings`
+    if (obj.difficulty !== 1 && obj.difficulty !== 2 && obj.difficulty !== 3)
+      return `Item ${index}: "difficulty" must be 1, 2, or 3`
+    return null
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setLoadError(null)
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const parsed: unknown = JSON.parse(ev.target?.result as string)
+        if (!Array.isArray(parsed)) {
+          setLoadError('JSON must be an array of question objects')
+          return
+        }
+        if (parsed.length === 0) {
+          setLoadError('File contains no questions')
+          return
+        }
+        for (let i = 0; i < parsed.length; i++) {
+          const err = validateQuestion(parsed[i], i + 1)
+          if (err) { setLoadError(err); return }
+        }
+        onLoadCustomQuestions?.(parsed as Question[])
+      } catch {
+        setLoadError('File is not valid JSON')
+      }
+    }
+    reader.onerror = () => setLoadError('Could not read file')
+    reader.readAsText(file)
+  }
+
+  function triggerFileLoad() {
+    setLoadError(null)
+    fileInputRef.current?.click()
+  }
 
   useEffect(() => {
     if (window.innerWidth < 768) setOpen(false)
@@ -272,7 +326,7 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
           {open && customExpanded && (
             <div style={{ marginBottom: 4 }}>
               <button
-                onClick={onLoadCustomQuestions}
+                onClick={triggerFileLoad}
                 className="sidebar-cert-btn"
               >
                 <span style={{
@@ -290,6 +344,21 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
                   </div>
                 </div>
               </button>
+              {loadError && (
+                <div style={{
+                  margin: '4px 8px 2px',
+                  padding: '5px 8px',
+                  borderRadius: 'var(--shape-corner-sm)',
+                  background: 'rgba(234,67,53,0.12)',
+                  border: '1px solid rgba(234,67,53,0.35)',
+                  color: '#ea4335',
+                  fontSize: 11,
+                  lineHeight: 1.4,
+                  wordBreak: 'break-word',
+                }}>
+                  {loadError}
+                </div>
+              )}
             </div>
           )}
 
@@ -299,7 +368,7 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ color: 'var(--app-text-dim)', fontSize: 10, flexShrink: 0, userSelect: 'none' }}>└</span>
                 <button
-                  onClick={onLoadCustomQuestions}
+                  onClick={triggerFileLoad}
                   title="Load custom questions"
                   style={{
                     height: 22,
@@ -323,6 +392,15 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
           )}
         </div>
       </div>
+
+      {/* Hidden file input for custom question loading */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
 
       {/* Footer */}
       {onShowProgress && (

@@ -38,6 +38,7 @@ export default function App() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [currentQuestionAnswered, setCurrentQuestionAnswered] = useState(false)
   const [allQuestions, setAllQuestions] = useState<Question[] | null>(null)
+  const [customQuestions, setCustomQuestions] = useState<Question[] | null>(null)
   const [answeredMap, setAnsweredMap] = useState<Record<number, { selected: string; result: AnswerResult }>>({})
   const [farthestIndex, setFarthestIndex] = useState(0)
 
@@ -154,6 +155,7 @@ export default function App() {
         questionCountByCert={questionCountByCert}
         onShowProgress={() => setAppState('progress')}
         onGoHome={() => setAppState('home')}
+        onLoadCustomQuestions={(qs) => setCustomQuestions(qs)}
         activeView={appState}
       />
 
