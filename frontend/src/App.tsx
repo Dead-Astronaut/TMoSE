@@ -3,7 +3,6 @@ import { Sidebar } from './components/Sidebar'
 import { CertOverview } from './components/CertOverview'
 import { QuestionCard } from './components/QuestionCard'
 import { ProgressView } from './components/ProgressView'
-import { OnrampContent } from './components/OnrampContent'
 import { loadQuestions, getLocalQuestions } from './data/questions'
 import { recordSession } from './data/progress'
 import { getCertById } from './data/certifications'
@@ -23,7 +22,7 @@ function randomSample<T>(arr: T[], n: number): T[] {
   return result
 }
 
-type AppState = 'home' | 'onramp' | 'overview' | 'session' | 'complete' | 'progress'
+type AppState = 'home' | 'overview' | 'session' | 'complete' | 'progress'
 
 export default function App() {
   const savedCertId = localStorage.getItem(STORAGE_KEY) ?? 'PCEP'
@@ -31,7 +30,6 @@ export default function App() {
     () => getCertById(savedCertId) ?? getCertById('PCEP')!
   )
   const [appState, setAppState] = useState<AppState>(() => {
-    if (typeof window !== 'undefined' && window.location.search.includes('view=onramp')) return 'onramp'
     return 'home'
   })
   const [questions, setQuestions] = useState<Question[]>([])
@@ -155,9 +153,6 @@ export default function App() {
         onSelectCert={handleSelectCert}
         questionCountByCert={questionCountByCert}
         onShowProgress={() => setAppState('progress')}
-        onShowSetUp={() => { window.location.href = '/setup.html' }}
-        onShowOnramp={() => setAppState('onramp')}
-        onShowZen={() => { window.location.href = '/setup-step4.html' }}
         onGoHome={() => setAppState('home')}
         activeView={appState}
       />
@@ -243,20 +238,6 @@ export default function App() {
             <p className="caption text-app-2" style={{ textAlign: 'center', maxWidth: 400, marginBottom: 24, lineHeight: 1.5 }}>
               PCEP · PCAP · PCPP1 · PCEI. Active recall, real code.
             </p>
-          </div>
-        )}
-
-{/* 2. Onramp */}
-        {appState === 'onramp' && (
-          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 'var(--space-lg) var(--space-2xl)' }}>
-              <OnrampContent />
-            </div>
-            <div className="section-footer">
-              <button onClick={goToCertifications} className="btn-primary">
-                Choose certification →
-              </button>
-            </div>
           </div>
         )}
 

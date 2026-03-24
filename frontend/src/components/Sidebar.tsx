@@ -7,21 +7,20 @@ interface SidebarProps {
   onSelectCert: (cert: CertInfo) => void
   questionCountByCert?: Record<string, number>
   onShowProgress?: () => void
-  onShowSetUp?: () => void
-  onShowOnramp?: () => void
-  onShowZen?: () => void
   onGoHome?: () => void
-  activeView?: 'home' | 'setUp' | 'onramp' | 'overview' | 'progress' | 'session' | 'complete'
+  onLoadCustomQuestions?: () => void
+  activeView?: 'home' | 'overview' | 'progress' | 'session' | 'complete'
 }
 
 const W_OPEN = 256
 const W_CLOSED = 112
 
-export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}, onShowProgress, onShowSetUp, onShowOnramp, onShowZen, onGoHome, activeView }: SidebarProps) {
+export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}, onShowProgress, onGoHome, onLoadCustomQuestions, activeView }: SidebarProps) {
   const [open, setOpen] = useState(false)
   const [expandedTracks, setExpandedTracks] = useState<Set<string>>(
     new Set(TRACKS.map(t => t.id))
   )
+  const [customExpanded, setCustomExpanded] = useState(true)
 
   useEffect(() => {
     if (window.innerWidth < 768) setOpen(false)
@@ -221,6 +220,108 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
 
           </div>
         ))}
+
+        {/* CUSTOM section */}
+        <div>
+          {/* Track header */}
+          <button
+            className="sidebar-track-btn"
+            onClick={() => open && setCustomExpanded(e => !e)}
+            style={{
+              cursor: open ? 'pointer' : 'default',
+              padding: open ? '10px 14px' : '8px 10px',
+              justifyContent: 'flex-start',
+              gap: open ? 'var(--space-sm)' : 4,
+            }}
+          >
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F59E0B', flexShrink: 0 }} />
+            {open && (
+              <>
+                <span style={{
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  color: '#F59E0B',
+                  textTransform: 'uppercase',
+                  flex: 1,
+                  whiteSpace: 'nowrap',
+                }}>
+                  Custom
+                </span>
+                <span style={{
+                  color: 'var(--app-text-dim)',
+                  transition: 'transform 0.18s',
+                  transform: customExpanded ? 'rotate(90deg)' : 'none',
+                  display: 'inline-block',
+                }}>▶</span>
+              </>
+            )}
+            {!open && (
+              <span style={{
+                fontWeight: 700,
+                fontSize: 10,
+                color: '#F59E0B',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+              }}>
+                Custom
+              </span>
+            )}
+          </button>
+
+          {/* Expanded: Load custom questions item */}
+          {open && customExpanded && (
+            <div style={{ marginBottom: 4 }}>
+              <button
+                onClick={onLoadCustomQuestions}
+                className="sidebar-cert-btn"
+              >
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: '#F59E0B', flexShrink: 0,
+                  opacity: 0.6,
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontWeight: 400,
+                    color: 'var(--app-text-2)',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    Load custom questions
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Collapsed: tree-style */}
+          {!open && (
+            <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4, paddingLeft: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ color: 'var(--app-text-dim)', fontSize: 10, flexShrink: 0, userSelect: 'none' }}>└</span>
+                <button
+                  onClick={onLoadCustomQuestions}
+                  title="Load custom questions"
+                  style={{
+                    height: 22,
+                    padding: '0 5px',
+                    borderRadius: 'var(--shape-corner-sm)',
+                    background: 'none',
+                    border: '1px solid transparent',
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center',
+                    fontWeight: 700,
+                    fontSize: 10,
+                    color: 'var(--app-text-muted)',
+                    transition: 'all 0.12s',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Load
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Footer */}
