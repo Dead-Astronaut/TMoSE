@@ -11,15 +11,16 @@ import type { CertInfo } from './data/certifications'
 import type { Question, AnswerResult } from './types'
 
 const API_BASE = '/api'
-const STORAGE_KEY = 'mypy_selected_cert'
+const STORAGE_KEY = 'tmose_selected_cert'
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
+function randomSample<T>(arr: T[], n: number): T[] {
+  const pool = [...arr]
+  const result: T[] = []
+  while (result.length < n && pool.length > 0) {
+    const idx = Math.floor(Math.random() * pool.length)
+    result.push(pool.splice(idx, 1)[0])
   }
-  return a
+  return result
 }
 
 type AppState = 'home' | 'onramp' | 'overview' | 'session' | 'complete' | 'progress'
@@ -37,7 +38,10 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [totalCorrect, setTotalCorrect] = useState(0)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [currentQuestionAnswered, setCurrentQuestionAnswered] = useState(false)
   const [allQuestions, setAllQuestions] = useState<Question[] | null>(null)
+  const [answeredMap, setAnsweredMap] = useState<Record<number, { selected: string; result: AnswerResult }>>({})
+  const [farthestIndex, setFarthestIndex] = useState(0)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, selectedCert.id)
@@ -74,29 +78,34 @@ export default function App() {
     } catch { /* offline */ }
 
     const certQs = questionBank.filter(q => q.certification === selectedCert.id)
-    setQuestions(shuffle(certQs.length > 0 ? certQs : questionBank))
+    setQuestions(randomSample(certQs.length > 0 ? certQs : questionBank, 36))
     setCurrentIndex(0)
     setTotalCorrect(0)
+    setCurrentQuestionAnswered(false)
+    setAnsweredMap({})
+    setFarthestIndex(0)
     setAppState('session')
   }, [selectedCert.id, questionBank])
 
   const handleAnswer = useCallback(async (answer: string): Promise<AnswerResult> => {
     const q = questions[currentIndex]
+    let finalResult: AnswerResult | null = null
     try {
       const res = await fetch(`${API_BASE}/answers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question_id: q.id, session_id: sessionId ?? 'local', user_answer: answer }),
       })
-      if (res.ok) {
-        const result: AnswerResult = await res.json()
-        if (result.is_correct) setTotalCorrect(c => c + 1)
-        return result
-      }
+      if (res.ok) finalResult = await res.json()
     } catch { /* offline */ }
-    const isCorrect = answer === q.correct_answer
-    if (isCorrect) setTotalCorrect(c => c + 1)
-    return { is_correct: isCorrect, explanation: q.explanation, correct_answer: q.correct_answer }
+    if (!finalResult) {
+      const isCorrect = answer === q.correct_answer
+      finalResult = { is_correct: isCorrect, explanation: q.explanation, correct_answer: q.correct_answer }
+    }
+    if (finalResult.is_correct) setTotalCorrect(c => c + 1)
+    setCurrentQuestionAnswered(true)
+    setAnsweredMap(m => ({ ...m, [currentIndex]: { selected: answer, result: finalResult! } }))
+    return finalResult
   }, [questions, currentIndex, sessionId])
 
   const handleNext = useCallback(() => {
@@ -104,16 +113,38 @@ export default function App() {
       recordSession(selectedCert.id, totalCorrect, questions.length)
       setAppState('complete')
     } else {
-      setCurrentIndex(i => i + 1)
+      const next = currentIndex + 1
+      setCurrentIndex(next)
+      setCurrentQuestionAnswered(next in answeredMap)
+      setFarthestIndex(f => Math.max(f, next))
     }
-  }, [currentIndex, questions.length, selectedCert.id, totalCorrect])
+  }, [currentIndex, questions.length, selectedCert.id, totalCorrect, answeredMap])
+
+  const handleGoToQuestion = useCallback((index: number) => {
+    if (index <= farthestIndex) {
+      setCurrentIndex(index)
+      setCurrentQuestionAnswered(index in answeredMap)
+    }
+  }, [farthestIndex, answeredMap])
+
+  const handlePrevious = useCallback(() => {
+    if (currentIndex > 0) {
+      const prev = currentIndex - 1
+      setCurrentIndex(prev)
+      setCurrentQuestionAnswered(prev in answeredMap)
+    }
+  }, [currentIndex, answeredMap])
 
   const handleEndSession = useCallback(async () => {
     if (sessionId) {
       try { await fetch(`${API_BASE}/sessions/${sessionId}`, { method: 'PATCH' }) } catch { /* silent */ }
     }
+    const answeredCount = Object.keys(answeredMap).length
+    if (answeredCount > 0) {
+      recordSession(selectedCert.id, totalCorrect, answeredCount)
+    }
     setAppState('overview')
-  }, [sessionId])
+  }, [sessionId, answeredMap, selectedCert.id, totalCorrect])
 
   return (
     <div className="app-root">
@@ -127,6 +158,7 @@ export default function App() {
         onShowSetUp={() => { window.location.href = '/setup.html' }}
         onShowOnramp={() => setAppState('onramp')}
         onShowZen={() => { window.location.href = '/setup-step4.html' }}
+        onGoHome={() => setAppState('home')}
         activeView={appState}
       />
 
@@ -135,36 +167,55 @@ export default function App() {
 
         {/* Persistent header */}
         <header className="app-nav">
-          <div className="app-nav-brand">
-            <span className="app-logo">my.py</span>
-            {(appState === 'overview' || appState === 'progress' || appState === 'onramp') && (
-              <button
-                type="button"
-                onClick={() => setAppState('home')}
-                className="btn-ghost caption text-app-muted"
-                style={{ padding: '4px 0' }}
-              >
-                Home
-              </button>
-            )}
-            {appState === 'session' && (
-              <>
-                <span className="text-app-dim small">/</span>
-                <span className="caption text-app-muted">{selectedCert.id}</span>
-              </>
-            )}
-          </div>
+          <div className="app-nav-brand" />
 
           {appState === 'session' && questions.length > 0 && (() => {
-            const accuracy = currentIndex + 1 > 1
-              ? Math.round((totalCorrect / currentIndex) * 100)
+            const answeredCount = Object.keys(answeredMap).length
+            const accuracy = answeredCount > 0
+              ? Math.round((totalCorrect / answeredCount) * 100)
               : 0
             return (
-              <div className="nav-stats">
-                <span className="nav-stat-label">
-                  Q<span className="text-app" style={{ fontWeight: 600 }}>{currentIndex + 1}</span>
-                </span>
-                {currentIndex + 1 > 1 && (
+              <div className="nav-stats" style={{ flex: 1, minWidth: 0 }}>
+                {/* Dots navigator */}
+                <div style={{ display: 'flex', gap: 5, overflowX: 'auto', overflowY: 'hidden', flex: 1, minWidth: 0, padding: '4px 6px' }}>
+                  {questions.map((_, i) => {
+                    const answered = answeredMap[i]
+                    const isCorrect = answered?.result?.is_correct
+                    const reachable = i <= farthestIndex
+                    const isCurrent = i === currentIndex
+                    const dotColor = !answered
+                      ? 'var(--app-border)'
+                      : isCorrect ? '#34a853' : '#ea4335'
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => reachable && handleGoToQuestion(i)}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: 2,
+                          cursor: reachable ? 'pointer' : 'default',
+                          opacity: reachable ? 1 : 0.3,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <div style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: dotColor,
+                          outline: isCurrent ? `2px solid ${dotColor === 'var(--app-border)' ? 'var(--app-text-muted)' : dotColor}` : 'none',
+                          outlineOffset: 2,
+                        }} />
+                        <span style={{ fontSize: 8, color: isCurrent ? 'var(--app-text)' : 'var(--app-text-muted)', fontWeight: isCurrent ? 700 : 400, lineHeight: 1 }}>
+                          {i + 1}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+                {answeredCount > 0 && (
                   <span className="nav-stat-label">
                     <span style={{
                       color: accuracy >= 70 ? 'var(--app-success)' : accuracy >= 40 ? 'var(--app-warning)' : 'var(--app-error)',
@@ -175,17 +226,9 @@ export default function App() {
                     {' '}correct
                   </span>
                 )}
-                <div style={{ display: 'flex', gap: 4 }}>
-                  {[1,2,3,4,5].map(i => {
-                    const filled = i <= (totalCorrect % 5 || (totalCorrect > 0 && totalCorrect % 5 === 0 ? 5 : 0))
-                    return (
-                      <div key={i} style={{
-                        width: 6, height: 6, borderRadius: '50%',
-                        background: filled ? 'var(--app-accent)' : 'var(--app-border)',
-                      }} />
-                    )
-                  })}
-                </div>
+                <span className="nav-stat-label">
+                  Q<span className="text-app" style={{ fontWeight: 600 }}>{currentIndex + 1}</span>
+                </span>
               </div>
             )
           })()}
@@ -200,28 +243,6 @@ export default function App() {
             <p className="caption text-app-2" style={{ textAlign: 'center', maxWidth: 400, marginBottom: 24, lineHeight: 1.5 }}>
               PCEP · PCAP · PCPP1 · PCEI. Active recall, real code.
             </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 32, flexWrap: 'wrap', justifyContent: 'center' }}>
-              {[
-                'Set Up', 'Onramp', 'Zen of Python', 'Choose cert',
-              ].map((label, i, arr) => (
-                <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{
-                      width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                      border: '1.5px solid rgba(127,255,95,0.35)',
-                      background: 'rgba(127,255,95,0.07)',
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, fontWeight: 700, color: '#7fff5f',
-                    }}>{i + 1}</span>
-                    <span className="small text-app-muted">{label}</span>
-                  </span>
-                  {i < arr.length - 1 && <span className="small text-app-dim">→</span>}
-                </span>
-              ))}
-            </div>
-            <a href="/setup.html" className="btn-primary">
-              Get started
-            </a>
           </div>
         )}
 
@@ -264,16 +285,67 @@ export default function App() {
                 totalCorrect={totalCorrect}
                 onAnswer={handleAnswer}
                 onNext={handleNext}
+                initialAnswerState={answeredMap[currentIndex]}
               />
-              <div style={{ textAlign: 'center', marginTop: 20 }}>
+            </div>
+            <div style={{ padding: '12px 16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {/* Left: End session */}
+              <button
+                onClick={handleEndSession}
+                style={{
+                  background: 'rgba(234,67,53,0.15)',
+                  border: '1px solid rgba(234,67,53,0.4)',
+                  color: '#ea4335',
+                  borderRadius: 8,
+                  padding: '8px 18px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                End session
+              </button>
+
+              {/* Center: Previous / Next */}
+              <div style={{ display: 'flex', gap: 8 }}>
                 <button
-                  onClick={handleEndSession}
-                  className="btn-ghost small text-app-muted"
-                  style={{ letterSpacing: '0.02em' }}
+                  onClick={handlePrevious}
+                  disabled={currentIndex === 0}
+                  style={{
+                    background: currentIndex === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: currentIndex === 0 ? 'rgba(255,255,255,0.25)' : '#e8eaed',
+                    borderRadius: 8,
+                    padding: '8px 0',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: currentIndex === 0 ? 'not-allowed' : 'pointer',
+                    width: 110,
+                  }}
                 >
-                  ← End session
+                  ← Previous
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={!currentQuestionAnswered}
+                  style={{
+                    background: currentQuestionAnswered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    color: currentQuestionAnswered ? '#e8eaed' : 'rgba(255,255,255,0.25)',
+                    borderRadius: 8,
+                    padding: '8px 0',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: currentQuestionAnswered ? 'pointer' : 'not-allowed',
+                    width: 110,
+                  }}
+                >
+                  Next →
                 </button>
               </div>
+
+              {/* Right: spacer to balance layout */}
+              <div style={{ width: 110 }} />
             </div>
           </div>
         )}

@@ -1,6 +1,6 @@
-# LLM Question Generation Prompt — my.py
+# LLM Question Generation Prompt — The Ministry of Silly Examinations
 
-Use this prompt to generate new questions for the my.py question bank.
+Use this prompt to generate new questions for the TMoSE question bank.
 Validate output against the schema before adding to JSON files.
 
 ## Prompt Template

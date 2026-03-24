@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'mypy_progress'
+const STORAGE_KEY = 'tmose_progress'
 
 export interface SessionRecord {
   certId: string
@@ -41,6 +41,12 @@ export function recordSession(certId: string, correct: number, total: number): v
     total,
     accuracy,
   })
+  save(records)
+}
+
+/** Remove a session record by its timestamp. */
+export function deleteSession(timestamp: number): void {
+  const records = load().filter(r => r.timestamp !== timestamp)
   save(records)
 }
 

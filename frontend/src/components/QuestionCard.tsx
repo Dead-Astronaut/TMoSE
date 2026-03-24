@@ -11,6 +11,7 @@ interface QuestionCardProps {
   totalCorrect: number
   onAnswer: (answer: string) => Promise<AnswerResult>
   onNext: () => void
+  initialAnswerState?: { selected: string; result: AnswerResult }
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -20,18 +21,20 @@ const TYPE_LABELS: Record<string, string> = {
   spot_the_bug: 'Spot the Bug',
 }
 
-export function QuestionCard({ question, onAnswer, onNext }: QuestionCardProps) {
-  const [selected, setSelected] = useState<string | null>(null)
-  const [result, setResult] = useState<AnswerResult | null>(null)
+export function QuestionCard({ question, onAnswer, onNext, initialAnswerState }: QuestionCardProps) {
+  // Component remounts on every navigation (key includes index), so useState initializers run fresh each time.
+  const [selected, setSelected] = useState<string | null>(initialAnswerState?.selected ?? null)
+  const [result, setResult] = useState<AnswerResult | null>(initialAnswerState?.result ?? null)
   const [loading, setLoading] = useState(false)
   const [revealed, setRevealed] = useState(false)
+  const [popupOpen, setPopupOpen] = useState(false)
+  // If restoring a previously answered question, show Explanation button immediately (popup stays closed)
+  const [popupDismissed, setPopupDismissed] = useState(initialAnswerState != null)
+  const [showExplosion, setShowExplosion] = useState(false)
 
   useEffect(() => {
-    setSelected(null)
-    setResult(null)
-    setRevealed(false)
     setTimeout(() => setRevealed(true), 50)
-  }, [question.id])
+  }, [])
 
   const handleSelect = async (option: string) => {
     if (result || loading) return
@@ -40,13 +43,18 @@ export function QuestionCard({ question, onAnswer, onNext }: QuestionCardProps) 
     try {
       const res = await onAnswer(option)
       setResult(res)
+      if (res.is_correct) setShowExplosion(true)
+      else setPopupOpen(true)
     } catch {
       const isCorrect = option === question.correct_answer
-      setResult({
+      const fallback = {
         is_correct: isCorrect,
         explanation: question.explanation,
         correct_answer: question.correct_answer,
-      })
+      }
+      setResult(fallback)
+      if (isCorrect) setShowExplosion(true)
+      else setPopupOpen(true)
     } finally {
       setLoading(false)
     }
@@ -120,22 +128,11 @@ export function QuestionCard({ question, onAnswer, onNext }: QuestionCardProps) 
         </div>
       </div>
 
-      {/* Correct: explosion + inline next */}
-      {result?.is_correct && (
-        <>
-          <ExplosionEffect />
-          <button
-            onClick={onNext}
-            className="font-sans w-full py-3.5 rounded-gemini bg-primary text-[#e8eaed] font-medium text-[15px] hover:bg-primary-hover transition-all duration-200 animate-pop-in"
-            style={{ boxShadow: '0 0 20px rgba(127,255,95,0.25)' }}
-          >
-            Next question →
-          </button>
-        </>
-      )}
+      {/* Correct: explosion effect */}
+      {showExplosion && <ExplosionEffect />}
 
-      {/* Incorrect: centered modal rendered at document.body via portal */}
-      {result && !result.is_correct && createPortal(
+      {/* Unified answer popup (correct + incorrect) */}
+      {result && popupOpen && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in"
           style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
@@ -144,27 +141,71 @@ export function QuestionCard({ question, onAnswer, onNext }: QuestionCardProps) 
             className="rounded-gemini-lg border border-border bg-surface-elevated shadow-gemini animate-pop-in"
             style={{ width: '90%', maxWidth: 480, padding: '32px 28px' }}
           >
+            {/* Header */}
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-incorrect" style={{ fontSize: 18, fontWeight: 700 }}>Not quite</span>
+              {result.is_correct ? (
+                <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-correct, #34a853)' }}>Correct! 🎉</span>
+              ) : (
+                <span className="text-incorrect" style={{ fontSize: 18, fontWeight: 700 }}>Not quite</span>
+              )}
             </div>
 
+            {/* Correct answer box (always shown) */}
             <div className="mb-4" style={{ background: 'rgba(52,168,83,0.08)', border: '1px solid rgba(52,168,83,0.25)', borderRadius: 10, padding: '10px 14px' }}>
               <p className="text-xs text-muted mb-1" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Correct answer</p>
               <p className="text-sm text-correct font-medium">{result.correct_answer}</p>
             </div>
 
+            {/* Explanation */}
             <p className="text-sm leading-relaxed" style={{ color: '#c8cacd', marginBottom: 28 }}>
               {result.explanation}
             </p>
 
-            <button
-              onClick={onNext}
-              className="font-sans w-full py-3.5 rounded-gemini bg-primary text-[#e8eaed] font-medium text-[15px] hover:bg-primary-hover transition-colors"
-            >
-              Next question
-            </button>
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={() => { setPopupOpen(false); setPopupDismissed(true) }}
+                className="font-sans flex-1 py-3 rounded-gemini font-medium text-[15px] transition-colors"
+                style={{ background: 'rgba(234,67,53,0.15)', border: '1px solid rgba(234,67,53,0.4)', color: '#f28b82' }}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => { setPopupOpen(false); setPopupDismissed(false); onNext() }}
+                className="font-sans flex-1 py-3 rounded-gemini font-medium text-[15px] transition-colors"
+                style={{ background: 'rgba(66,133,244,0.15)', border: '1px solid rgba(66,133,244,0.4)', color: '#4db6f7' }}
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>,
+        document.body
+      )}
+
+      {/* Explanation button — shown after popup dismissed, bottom-right corner */}
+      {result && (popupDismissed || result.is_correct) && !popupOpen && createPortal(
+        <button
+          onClick={() => setPopupOpen(true)}
+          className="font-sans"
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            zIndex: 40,
+            background: 'rgba(66,133,244,0.15)',
+            border: '1px solid rgba(66,133,244,0.4)',
+            color: '#4db6f7',
+            borderRadius: 8,
+            padding: '8px 18px',
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+          }}
+        >
+          Explanation
+        </button>,
         document.body
       )}
 

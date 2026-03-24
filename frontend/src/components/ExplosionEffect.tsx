@@ -39,7 +39,7 @@ export function ExplosionEffect() {
         className="absolute font-sans font-bold text-4xl text-[#7fff5f] animate-explode-text"
         style={{ textShadow: '0 0 24px rgba(127,255,95,0.8)' }}
       >
-        my.py
+        Correct!
       </span>
       <div className="relative w-4 h-4">
         {particles.map((p) => (

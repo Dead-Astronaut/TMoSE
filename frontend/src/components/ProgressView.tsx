@@ -1,4 +1,5 @@
-import { getSessionHistory, getProgressByCert } from '../data/progress'
+import { useState } from 'react'
+import { getSessionHistory, getProgressByCert, deleteSession } from '../data/progress'
 
 const CERT_ORDER = ['PCEP', 'PCAP', 'PCPP1', 'PCEI']
 
@@ -14,8 +15,13 @@ function formatDate(ts: number): string {
 }
 
 export function ProgressView() {
-  const history = getSessionHistory()
+  const [history, setHistory] = useState(() => getSessionHistory())
   const byCert = getProgressByCert()
+
+  function handleDelete(timestamp: number) {
+    deleteSession(timestamp)
+    setHistory(getSessionHistory())
+  }
 
   return (
     <div style={{
@@ -77,12 +83,29 @@ export function ProgressView() {
               <span className="caption text-app font-mono" style={{ fontWeight: 600 }}>{r.certId}</span>
               <span className="small text-app-muted" style={{ marginLeft: 8 }}>{formatDate(r.timestamp)}</span>
             </div>
-            <span className="small font-mono" style={{
-              fontWeight: 600,
-              color: r.accuracy >= 70 ? 'var(--app-success)' : r.accuracy >= 50 ? 'var(--app-warning)' : 'var(--app-error)',
-            }}>
-              {r.correct}/{r.total} · {r.accuracy}%
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+              <span className="small font-mono" style={{
+                fontWeight: 600,
+                color: r.accuracy >= 70 ? 'var(--app-success)' : r.accuracy >= 50 ? 'var(--app-warning)' : 'var(--app-error)',
+              }}>
+                {r.correct}/{r.total} · {r.accuracy}%
+              </span>
+              <button
+                onClick={() => handleDelete(r.timestamp)}
+                style={{
+                  background: 'var(--app-error)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  padding: '2px 10px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         ))}
       </div>
