@@ -855,7 +855,7 @@ ol.template-content-list { list-style-type: decimal; }
 }
 
 .sidebar-header {
-  height: 56px;
+  height: var(--nav-height);
   display: flex;
   align-items: center;
   padding: 0 var(--space-md);
