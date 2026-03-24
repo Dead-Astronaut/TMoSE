@@ -10,19 +10,14 @@ interface SidebarProps {
   onShowSetUp?: () => void
   onShowOnramp?: () => void
   onShowZen?: () => void
+  onGoHome?: () => void
   activeView?: 'home' | 'setUp' | 'onramp' | 'overview' | 'progress' | 'session' | 'complete'
 }
 
-const LEVEL_LABEL: Record<string, string> = {
-  entry: 'Entry',
-  associate: 'Assoc.',
-  professional: 'Prof.',
-}
-
 const W_OPEN = 256
-const W_CLOSED = 52
+const W_CLOSED = 112
 
-export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}, onShowProgress, onShowSetUp, onShowOnramp, onShowZen, activeView }: SidebarProps) {
+export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}, onShowProgress, onShowSetUp, onShowOnramp, onShowZen, onGoHome, activeView }: SidebarProps) {
   const [open, setOpen] = useState(false)
   const [expandedTracks, setExpandedTracks] = useState<Set<string>>(
     new Set(TRACKS.map(t => t.id))
@@ -46,48 +41,52 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
       style={{ width: open ? W_OPEN : W_CLOSED, minWidth: open ? W_OPEN : W_CLOSED }}
     >
       {/* Header */}
-      <div className="sidebar-header">
+      <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
         <button
           className="sidebar-hamburger"
           onClick={() => setOpen(o => !o)}
           title={open ? 'Collapse sidebar' : 'Expand sidebar'}
+          style={{ flexShrink: 0 }}
         >
           <span /><span /><span />
         </button>
+        {open ? (
+          <span
+            onClick={onGoHome}
+            style={{
+              fontWeight: 700,
+              fontSize: 11,
+              lineHeight: 1.2,
+              whiteSpace: 'nowrap',
+              background: 'linear-gradient(135deg, #7fff5f 0%, #4fffbf 45%, #7fff5f 100%)',
+              backgroundSize: '200% 200%',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              cursor: onGoHome ? 'pointer' : 'default',
+            }}
+          >
+            The Ministry of Silly Examinations
+          </span>
+        ) : (
+          <span
+            onClick={onGoHome}
+            style={{
+              fontWeight: 700,
+              fontSize: 11,
+              whiteSpace: 'nowrap',
+              background: 'linear-gradient(135deg, #7fff5f 0%, #4fffbf 45%, #7fff5f 100%)',
+              backgroundSize: '200% 200%',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              cursor: onGoHome ? 'pointer' : 'default',
+            }}
+          >
+            TMoSE
+          </span>
+        )}
       </div>
-
-      {/* Set Up / Onramp */}
-      {open && (onShowSetUp ?? onShowOnramp) && (
-        <div className="sidebar-nav-section">
-          {onShowSetUp && (
-            <button
-              type="button"
-              onClick={onShowSetUp}
-              className={`sidebar-nav-btn${activeView === 'setUp' ? ' sidebar-nav-btn--active' : ''}`}
-            >
-              1. Set Up
-            </button>
-          )}
-          {onShowOnramp && (
-            <button
-              type="button"
-              onClick={onShowOnramp}
-              className={`sidebar-nav-btn${activeView === 'onramp' ? ' sidebar-nav-btn--active' : ''}`}
-            >
-              2. Onramp
-            </button>
-          )}
-          {onShowZen && (
-            <button
-              type="button"
-              onClick={onShowZen}
-              className="sidebar-nav-btn"
-            >
-              3. Zen of Python
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Section label */}
       {open && <div className="sidebar-section-label">Certifications</div>}
@@ -103,8 +102,9 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
               onClick={() => open && toggleTrack(track.id)}
               style={{
                 cursor: open ? 'pointer' : 'default',
-                padding: open ? '10px 14px' : '10px 0',
-                justifyContent: open ? 'flex-start' : 'center',
+                padding: open ? '10px 14px' : '8px 10px',
+                justifyContent: 'flex-start',
+                gap: open ? 'var(--space-sm)' : 4,
               }}
             >
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: track.color, flexShrink: 0 }} />
@@ -128,13 +128,24 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
                   }}>▶</span>
                 </>
               )}
+              {!open && (
+                <span style={{
+                  fontWeight: 700,
+                  fontSize: 10,
+                  color: track.color,
+                  textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {track.name}
+                </span>
+              )}
             </button>
 
             {/* Expanded cert list */}
             {open && expandedTracks.has(track.id) && (
               <div style={{ marginBottom: 4 }}>
                 {track.certs.map(cert => {
-                  const isSelected = cert.id === selectedCertId
+                  const isSelected = cert.id === selectedCertId && (activeView === 'overview' || activeView === 'session' || activeView === 'complete')
                   const count = questionCountByCert[cert.id] ?? cert.questionCount
                   const isLocked = count === 0
                   return (
@@ -159,7 +170,7 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
                           {cert.name}
                         </div>
                         <div className="text-app-muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>
-                          {LEVEL_LABEL[cert.level]} · {cert.code}
+                          {cert.code}
                         </div>
                       </div>
                       <span style={{ color: isLocked ? 'var(--app-text-dim)' : count > 0 ? 'var(--app-accent)' : 'var(--app-text-dim)', flexShrink: 0 }}>
@@ -171,29 +182,40 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
               </div>
             )}
 
-            {/* Collapsed: icon buttons */}
+            {/* Collapsed: tree-style cert list */}
             {!open && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, paddingBottom: 8 }}>
-                {track.certs.map(cert => (
-                  <button
-                    key={cert.id}
-                    onClick={() => onSelectCert(cert)}
-                    title={cert.fullName}
-                    style={{
-                      width: 30, height: 30,
-                      borderRadius: 'var(--shape-corner-sm)',
-                      background: cert.id === selectedCertId ? 'rgba(127,255,95,0.1)' : 'none',
-                      border: cert.id === selectedCertId ? '1px solid rgba(127,255,95,0.4)' : '1px solid transparent',
-                      cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontWeight: 700,
-                      color: cert.id === selectedCertId ? 'var(--app-accent)' : 'var(--app-text-muted)',
-                      transition: 'all 0.12s',
-                    }}
-                  >
-                    {cert.name.slice(0, 2)}
-                  </button>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4, paddingLeft: 10 }}>
+                {track.certs.map((cert, i) => {
+                  const isSelected = cert.id === selectedCertId && (activeView === 'overview' || activeView === 'session' || activeView === 'complete')
+                  const isLast = i === track.certs.length - 1
+                  return (
+                    <div key={cert.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ color: 'var(--app-text-dim)', fontSize: 10, flexShrink: 0, userSelect: 'none' }}>
+                        {isLast ? '└' : '├'}
+                      </span>
+                      <button
+                        onClick={() => onSelectCert(cert)}
+                        title={cert.fullName}
+                        style={{
+                          height: 22,
+                          padding: '0 5px',
+                          borderRadius: 'var(--shape-corner-sm)',
+                          background: isSelected ? 'rgba(127,255,95,0.1)' : 'none',
+                          border: isSelected ? '1px solid rgba(127,255,95,0.4)' : '1px solid transparent',
+                          cursor: 'pointer',
+                          display: 'flex', alignItems: 'center',
+                          fontWeight: 700,
+                          fontSize: 10,
+                          color: isSelected ? 'var(--app-accent)' : 'var(--app-text-muted)',
+                          transition: 'all 0.12s',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {cert.name.replace('™', '')}
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             )}
 
@@ -201,24 +223,17 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
         ))}
       </div>
 
-      {/* Progress */}
-      {open && onShowProgress && (
-        <div style={{ margin: '0 var(--space-sm) var(--space-sm)' }}>
+      {/* Footer */}
+      {onShowProgress && (
+        <div className="sidebar-footer" style={{ padding: open ? undefined : '6px 8px' }}>
           <button
             type="button"
             onClick={onShowProgress}
             className={`sidebar-nav-btn${activeView === 'progress' ? ' sidebar-nav-btn--active' : ''}`}
-            style={{ width: '100%' }}
+            style={{ width: '100%', display: 'flex', paddingLeft: '10px', alignItems: 'center', justifyContent: open ? 'flex-start' : 'center', fontSize: open ? undefined : 11, whiteSpace: 'nowrap', overflow: 'hidden' }}
           >
-            Progress
+            🏆 Progress
           </button>
-        </div>
-      )}
-
-      {/* Footer */}
-      {open && (
-        <div className="sidebar-footer">
-          🔒 = questions coming soon
         </div>
       )}
     </aside>

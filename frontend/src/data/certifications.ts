@@ -53,7 +53,7 @@ const CERT_DATA: Omit<CertInfo, 'questionCount' | 'topics'>[] = [
     name: 'PCEI™',
     fullName: 'PCEI™ – Certified Entry-Level AI Specialist',
     description: 'Validate foundational AI knowledge: machine learning concepts, neural networks, AI tools, and responsible AI practices.',
-    level: 'expert',
+    level: 'entry',
     code: 'PCEI',
   },
 ]

@@ -44,6 +44,12 @@ export function recordSession(certId: string, correct: number, total: number): v
   save(records)
 }
 
+/** Remove a session record by its timestamp. */
+export function deleteSession(timestamp: number): void {
+  const records = load().filter(r => r.timestamp !== timestamp)
+  save(records)
+}
+
 /** Full session history, newest first. */
 export function getSessionHistory(): SessionRecord[] {
   return load().slice().reverse()
