@@ -6,6 +6,7 @@ import { CreateCustomQuestionsView } from './components/CreateCustomQuestionsVie
 import { SessionNavigationHeader } from './components/SessionNavigationHeader'
 import { QuestionCard } from './components/QuestionCard'
 import { ProgressView } from './components/ProgressView'
+import { AboutView } from './components/AboutView'
 import { loadQuestions, getLocalQuestions } from './data/questions'
 import { recordSession } from './data/progress'
 import { getCertById } from './data/certifications'
@@ -24,7 +25,7 @@ function randomSample<T>(arr: T[], n: number): T[] {
   return result
 }
 
-type AppState = 'home' | 'overview' | 'load-custom-view' | 'create-custom-view' | 'session' | 'complete' | 'progress'
+type AppState = 'home' | 'overview' | 'load-custom-view' | 'create-custom-view' | 'session' | 'complete' | 'progress' | 'about'
 
 export default function App() {
   const savedCertId = localStorage.getItem(STORAGE_KEY) ?? 'PCEP'
@@ -151,6 +152,7 @@ export default function App() {
         onGoHome={() => setAppState('home')}
         onLoadCustomQuestions={(qs) => { setCustomQuestions(qs); setAppState('load-custom-view') }}
         onCreateCustomQuestionsView={() => setAppState('create-custom-view')}
+        onShowAbout={() => setAppState('about')}
         activeView={appState}
       />
 
@@ -173,18 +175,13 @@ export default function App() {
         {appState === 'home' && (
           <div className="app-view">
             <h2
+              className="app-title-gradient"
               style={{
                 fontWeight: 700,
                 fontSize: 32,
                 lineHeight: 1.2,
                 marginBottom: 24,
                 textAlign: 'center',
-                background: 'linear-gradient(135deg, #7fff5f 0%, #4fffbf 35%, #ffffff 50%, #4fffbf 65%, #7fff5f 100%)',
-                backgroundSize: '300% 300%',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                animation: 'gradient-flow 20s ease infinite',
                 letterSpacing: '0.01em',
               }}
             >
@@ -232,6 +229,11 @@ export default function App() {
           <div className="app-view-scroll">
             <ProgressView />
           </div>
+        )}
+
+        {/* About */}
+        {appState === 'about' && (
+          <AboutView />
         )}
 
         {/* Session */}

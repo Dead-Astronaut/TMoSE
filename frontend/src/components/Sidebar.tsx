@@ -11,13 +11,14 @@ interface SidebarProps {
   onGoHome?: () => void
   onLoadCustomQuestions?: (questions: Question[]) => void
   onCreateCustomQuestionsView?: () => void
-  activeView?: 'home' | 'overview' | 'load-custom-view' | 'create-custom-view' | 'progress' | 'session' | 'complete'
+  onShowAbout?: () => void
+  activeView?: 'home' | 'overview' | 'load-custom-view' | 'create-custom-view' | 'progress' | 'about' | 'session' | 'complete'
 }
 
 const W_OPEN = 256
 const W_CLOSED = 112
 
-export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}, onShowProgress, onGoHome, onLoadCustomQuestions, onCreateCustomQuestionsView, activeView }: SidebarProps) {
+export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}, onShowProgress, onGoHome, onLoadCustomQuestions, onCreateCustomQuestionsView, onShowAbout, activeView }: SidebarProps) {
   const [open, setOpen] = useState(false)
   const [expandedTracks, setExpandedTracks] = useState<Set<string>>(
     new Set(TRACKS.map(t => t.id))
@@ -114,16 +115,12 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
         {open ? (
           <span
             onClick={onGoHome}
+            className="app-title-gradient"
             style={{
               fontWeight: 700,
               fontSize: 11,
               lineHeight: 1.2,
               whiteSpace: 'nowrap',
-              background: 'linear-gradient(135deg, #7fff5f 0%, #4fffbf 45%, #7fff5f 100%)',
-              backgroundSize: '200% 200%',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
               cursor: onGoHome ? 'pointer' : 'default',
             }}
           >
@@ -132,15 +129,11 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
         ) : (
           <span
             onClick={onGoHome}
+            className="app-title-gradient"
             style={{
               fontWeight: 700,
               fontSize: 11,
               whiteSpace: 'nowrap',
-              background: 'linear-gradient(135deg, #7fff5f 0%, #4fffbf 45%, #7fff5f 100%)',
-              backgroundSize: '200% 200%',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
               cursor: onGoHome ? 'pointer' : 'default',
             }}
           >
@@ -482,9 +475,17 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
             type="button"
             onClick={onShowProgress}
             className={`sidebar-nav-btn${activeView === 'progress' ? ' sidebar-nav-btn--active' : ''}`}
-            style={{ width: '100%', display: 'flex', paddingLeft: '10px', alignItems: 'center', justifyContent: open ? 'flex-start' : 'center', fontSize: open ? undefined : 11, whiteSpace: 'nowrap', overflow: 'hidden' }}
+            style={{ width: '100%', display: 'flex', paddingLeft: '10px', alignItems: 'center', justifyContent: 'flex-start', fontSize: open ? undefined : 11, whiteSpace: 'nowrap', overflow: 'hidden' }}
           >
             🏆 Progress
+          </button>
+          <button
+            type="button"
+            onClick={onShowAbout}
+            className={`sidebar-nav-btn${activeView === 'about' ? ' sidebar-nav-btn--active' : ''}`}
+            style={{ width: '100%', display: 'flex', paddingLeft: '10px', alignItems: 'center', justifyContent: 'flex-start', fontSize: open ? undefined : 11, whiteSpace: 'nowrap', overflow: 'hidden', marginTop: 2 }}
+          >
+            ℹ️ About
           </button>
         </div>
       )}
