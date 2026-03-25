@@ -2,12 +2,12 @@ import type { Question } from '../types'
 
 const CUSTOM_COLOR = '#F59E0B'
 
-interface CustomOverviewProps {
+interface CustomQuestionsViewProps {
   questions: Question[]
   onStart: () => void
 }
 
-export function CustomOverview({ questions, onStart }: CustomOverviewProps) {
+export function CustomQuestionsView({ questions, onStart }: CustomQuestionsViewProps) {
   const certName = questions[0].certification
 
   return (

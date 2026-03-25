@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { CertOverview } from './components/CertOverview'
-import { CustomOverview } from './components/CustomOverview'
+import { CustomQuestionsView } from './components/CustomQuestionsView'
+import { CreateCustomQuestionsView } from './components/CreateCustomQuestionsView'
 import { SessionNavigationHeader } from './components/SessionNavigationHeader'
 import { QuestionCard } from './components/QuestionCard'
 import { ProgressView } from './components/ProgressView'
@@ -23,7 +24,7 @@ function randomSample<T>(arr: T[], n: number): T[] {
   return result
 }
 
-type AppState = 'home' | 'overview' | 'custom-overview' | 'session' | 'complete' | 'progress'
+type AppState = 'home' | 'overview' | 'load-custom-view' | 'create-custom-view' | 'session' | 'complete' | 'progress'
 
 export default function App() {
   const savedCertId = localStorage.getItem(STORAGE_KEY) ?? 'PCEP'
@@ -42,6 +43,7 @@ export default function App() {
   const [isCustomSession, setIsCustomSession] = useState(false)
   const [answeredMap, setAnsweredMap] = useState<Record<number, { selected: string; result: AnswerResult }>>({})
   const [farthestIndex, setFarthestIndex] = useState(0)
+  const [sessionAnsweredCount, setSessionAnsweredCount] = useState(0)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, selectedCert.id)
@@ -102,6 +104,7 @@ export default function App() {
     const sessionCertId = isCustomSession ? (customQuestions?.[0]?.certification ?? selectedCert.id) : selectedCert.id
     if (currentIndex + 1 >= questions.length) {
       recordSession(sessionCertId, totalCorrect, questions.length)
+      setSessionAnsweredCount(questions.length)
       setAppState('complete')
     } else {
       const next = currentIndex + 1
@@ -132,7 +135,8 @@ export default function App() {
     if (answeredCount > 0) {
       recordSession(sessionCertId, totalCorrect, answeredCount)
     }
-    setAppState(isCustomSession ? 'custom-overview' : 'overview')
+    setSessionAnsweredCount(answeredCount)
+    setAppState('complete')
   }, [answeredMap, selectedCert.id, totalCorrect, isCustomSession, customQuestions])
 
   return (
@@ -145,7 +149,8 @@ export default function App() {
         questionCountByCert={questionCountByCert}
         onShowProgress={() => setAppState('progress')}
         onGoHome={() => setAppState('home')}
-        onLoadCustomQuestions={(qs) => { setCustomQuestions(qs); setAppState('custom-overview') }}
+        onLoadCustomQuestions={(qs) => { setCustomQuestions(qs); setAppState('load-custom-view') }}
+        onCreateCustomQuestionsView={() => setAppState('create-custom-view')}
         activeView={appState}
       />
 
@@ -213,8 +218,13 @@ export default function App() {
         )}
 
         {/* Custom overview */}
-        {appState === 'custom-overview' && customQuestions && (
-          <CustomOverview questions={customQuestions} onStart={startCustomSession} />
+        {appState === 'load-custom-view' && customQuestions && (
+          <CustomQuestionsView questions={customQuestions} onStart={startCustomSession} />
+        )}
+
+        {/* Create custom questions */}
+        {appState === 'create-custom-view' && (
+          <CreateCustomQuestionsView />
         )}
 
         {/* Progress */}
@@ -302,8 +312,8 @@ export default function App() {
 
         {/* Complete */}
         {appState === 'complete' && (() => {
-          const accuracy = questions.length > 0
-            ? Math.round((totalCorrect / questions.length) * 100)
+          const accuracy = sessionAnsweredCount > 0
+            ? Math.round((totalCorrect / sessionAnsweredCount) * 100)
             : 0
           const displayCertName = isCustomSession
             ? (customQuestions?.[0]?.certification ?? 'Custom')
@@ -318,14 +328,14 @@ export default function App() {
                   Session Complete
                 </h2>
                 <p className="caption text-app-2" style={{ marginBottom: 28 }}>
-                  {displayCertName} · {questions.length} questions
+                  {displayCertName} · {sessionAnsweredCount} questions
                 </p>
 
                 <div className="card" style={{ marginBottom: 24 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
                     <span className="caption text-app-2">Correct</span>
                     <span className="text-success font-mono" style={{ fontWeight: 600 }}>
-                      {totalCorrect} / {questions.length}
+                      {totalCorrect} / {sessionAnsweredCount}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -348,7 +358,7 @@ export default function App() {
                     Practice Again
                   </button>
                   <button
-                    onClick={() => setAppState(isCustomSession ? 'custom-overview' : 'overview')}
+                    onClick={() => setAppState(isCustomSession ? 'load-custom-view' : 'overview')}
                     className="btn-secondary"
                     style={{ flex: 1, padding: '13px 0' }}
                   >
