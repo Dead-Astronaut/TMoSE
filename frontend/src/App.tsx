@@ -167,6 +167,24 @@ export default function App() {
         {/* Home */}
         {appState === 'home' && (
           <div className="app-view">
+            <h2
+              style={{
+                fontWeight: 700,
+                fontSize: 32,
+                lineHeight: 1.2,
+                marginBottom: 24,
+                textAlign: 'center',
+                background: 'linear-gradient(135deg, #7fff5f 0%, #4fffbf 35%, #ffffff 50%, #4fffbf 65%, #7fff5f 100%)',
+                backgroundSize: '300% 300%',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                animation: 'gradient-flow 20s ease infinite',
+                letterSpacing: '0.01em',
+              }}
+            >
+              The Ministry of Silly Examinations
+            </h2>
             <img
               src="/media/baner.jpg"
               alt="Python Certification Practice"
@@ -182,7 +200,7 @@ export default function App() {
               Python Certification Practice
             </h1>
             <p className="caption text-app-2" style={{ textAlign: 'center', maxWidth: 400, marginBottom: 24, lineHeight: 1.5 }}>
-              PCEP · PCAP · PCPP1 · PCEI. Active recall, real code.
+              PCEP · PCAP · PCPP1 · PCEI... or just anything
             </p>
           </div>
         )}

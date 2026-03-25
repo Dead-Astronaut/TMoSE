@@ -823,11 +823,18 @@ ol.template-content-list { list-style-type: decimal; }
 
 .app-view {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   padding: var(--space-2xl);
+}
+
+.app-view::before,
+.app-view::after {
+  content: '';
+  flex: 1;
 }
 
 .app-view-scroll {
