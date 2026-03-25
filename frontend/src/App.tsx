@@ -43,6 +43,7 @@ export default function App() {
   const [isCustomSession, setIsCustomSession] = useState(false)
   const [answeredMap, setAnsweredMap] = useState<Record<number, { selected: string; result: AnswerResult }>>({})
   const [farthestIndex, setFarthestIndex] = useState(0)
+  const [sessionAnsweredCount, setSessionAnsweredCount] = useState(0)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, selectedCert.id)
@@ -103,6 +104,7 @@ export default function App() {
     const sessionCertId = isCustomSession ? (customQuestions?.[0]?.certification ?? selectedCert.id) : selectedCert.id
     if (currentIndex + 1 >= questions.length) {
       recordSession(sessionCertId, totalCorrect, questions.length)
+      setSessionAnsweredCount(questions.length)
       setAppState('complete')
     } else {
       const next = currentIndex + 1
@@ -133,7 +135,8 @@ export default function App() {
     if (answeredCount > 0) {
       recordSession(sessionCertId, totalCorrect, answeredCount)
     }
-    setAppState(isCustomSession ? 'load-custom-view' : 'overview')
+    setSessionAnsweredCount(answeredCount)
+    setAppState('complete')
   }, [answeredMap, selectedCert.id, totalCorrect, isCustomSession, customQuestions])
 
   return (
@@ -309,8 +312,8 @@ export default function App() {
 
         {/* Complete */}
         {appState === 'complete' && (() => {
-          const accuracy = questions.length > 0
-            ? Math.round((totalCorrect / questions.length) * 100)
+          const accuracy = sessionAnsweredCount > 0
+            ? Math.round((totalCorrect / sessionAnsweredCount) * 100)
             : 0
           const displayCertName = isCustomSession
             ? (customQuestions?.[0]?.certification ?? 'Custom')
@@ -325,14 +328,14 @@ export default function App() {
                   Session Complete
                 </h2>
                 <p className="caption text-app-2" style={{ marginBottom: 28 }}>
-                  {displayCertName} · {questions.length} questions
+                  {displayCertName} · {sessionAnsweredCount} questions
                 </p>
 
                 <div className="card" style={{ marginBottom: 24 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
                     <span className="caption text-app-2">Correct</span>
                     <span className="text-success font-mono" style={{ fontWeight: 600 }}>
-                      {totalCorrect} / {questions.length}
+                      {totalCorrect} / {sessionAnsweredCount}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
