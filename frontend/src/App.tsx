@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { CertOverview } from './components/CertOverview'
-import { CustomOverview } from './components/CustomOverview'
+import { CustomQuestionsView } from './components/CustomQuestionsView'
+import { CreateCustomQuestionsView } from './components/CreateCustomQuestionsView'
 import { SessionNavigationHeader } from './components/SessionNavigationHeader'
 import { QuestionCard } from './components/QuestionCard'
 import { ProgressView } from './components/ProgressView'
@@ -23,7 +24,7 @@ function randomSample<T>(arr: T[], n: number): T[] {
   return result
 }
 
-type AppState = 'home' | 'overview' | 'custom-overview' | 'session' | 'complete' | 'progress'
+type AppState = 'home' | 'overview' | 'load-custom-view' | 'create-custom-view' | 'session' | 'complete' | 'progress'
 
 export default function App() {
   const savedCertId = localStorage.getItem(STORAGE_KEY) ?? 'PCEP'
@@ -132,7 +133,7 @@ export default function App() {
     if (answeredCount > 0) {
       recordSession(sessionCertId, totalCorrect, answeredCount)
     }
-    setAppState(isCustomSession ? 'custom-overview' : 'overview')
+    setAppState(isCustomSession ? 'load-custom-view' : 'overview')
   }, [answeredMap, selectedCert.id, totalCorrect, isCustomSession, customQuestions])
 
   return (
@@ -145,7 +146,8 @@ export default function App() {
         questionCountByCert={questionCountByCert}
         onShowProgress={() => setAppState('progress')}
         onGoHome={() => setAppState('home')}
-        onLoadCustomQuestions={(qs) => { setCustomQuestions(qs); setAppState('custom-overview') }}
+        onLoadCustomQuestions={(qs) => { setCustomQuestions(qs); setAppState('load-custom-view') }}
+        onCreateCustomQuestionsView={() => setAppState('create-custom-view')}
         activeView={appState}
       />
 
@@ -213,8 +215,13 @@ export default function App() {
         )}
 
         {/* Custom overview */}
-        {appState === 'custom-overview' && customQuestions && (
-          <CustomOverview questions={customQuestions} onStart={startCustomSession} />
+        {appState === 'load-custom-view' && customQuestions && (
+          <CustomQuestionsView questions={customQuestions} onStart={startCustomSession} />
+        )}
+
+        {/* Create custom questions */}
+        {appState === 'create-custom-view' && (
+          <CreateCustomQuestionsView />
         )}
 
         {/* Progress */}
@@ -348,7 +355,7 @@ export default function App() {
                     Practice Again
                   </button>
                   <button
-                    onClick={() => setAppState(isCustomSession ? 'custom-overview' : 'overview')}
+                    onClick={() => setAppState(isCustomSession ? 'load-custom-view' : 'overview')}
                     className="btn-secondary"
                     style={{ flex: 1, padding: '13px 0' }}
                   >

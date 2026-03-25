@@ -10,13 +10,14 @@ interface SidebarProps {
   onShowProgress?: () => void
   onGoHome?: () => void
   onLoadCustomQuestions?: (questions: Question[]) => void
-  activeView?: 'home' | 'overview' | 'custom-overview' | 'progress' | 'session' | 'complete'
+  onCreateCustomQuestionsView?: () => void
+  activeView?: 'home' | 'overview' | 'load-custom-view' | 'create-custom-view' | 'progress' | 'session' | 'complete'
 }
 
 const W_OPEN = 256
 const W_CLOSED = 112
 
-export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}, onShowProgress, onGoHome, onLoadCustomQuestions, activeView }: SidebarProps) {
+export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}, onShowProgress, onGoHome, onLoadCustomQuestions, onCreateCustomQuestionsView, activeView }: SidebarProps) {
   const [open, setOpen] = useState(false)
   const [expandedTracks, setExpandedTracks] = useState<Set<string>>(
     new Set(TRACKS.map(t => t.id))
@@ -329,9 +330,28 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
             )}
           </button>
 
-          {/* Expanded: Load custom questions item */}
+          {/* Expanded: Create + Load custom questions items */}
           {open && customExpanded && (
             <div style={{ marginBottom: 4 }}>
+              <button
+                onClick={onCreateCustomQuestionsView}
+                className={`sidebar-cert-btn${activeView === 'create-custom-view' ? ' sidebar-cert-btn--active' : ''}`}
+              >
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: '#F59E0B', flexShrink: 0,
+                  opacity: activeView === 'create-custom-view' ? 1 : 0.6,
+                }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontWeight: activeView === 'create-custom-view' ? 600 : 400,
+                    color: activeView === 'create-custom-view' ? 'var(--app-text)' : 'var(--app-text-2)',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    Create custom questions
+                  </div>
+                </div>
+              </button>
               <button
                 onClick={triggerFileLoad}
                 className="sidebar-cert-btn"
@@ -373,6 +393,29 @@ export function Sidebar({ selectedCertId, onSelectCert, questionCountByCert = {}
           {/* Collapsed: tree-style */}
           {!open && (
             <div style={{ display: 'flex', flexDirection: 'column', paddingBottom: 4, paddingLeft: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ color: 'var(--app-text-dim)', fontSize: 10, flexShrink: 0, userSelect: 'none' }}>├</span>
+                <button
+                  onClick={onCreateCustomQuestionsView}
+                  title="Create custom questions"
+                  style={{
+                    height: 22,
+                    padding: '0 5px',
+                    borderRadius: 'var(--shape-corner-sm)',
+                    background: activeView === 'create-custom-view' ? 'rgba(245,158,11,0.1)' : 'none',
+                    border: activeView === 'create-custom-view' ? '1px solid rgba(245,158,11,0.4)' : '1px solid transparent',
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center',
+                    fontWeight: 700,
+                    fontSize: 10,
+                    color: activeView === 'create-custom-view' ? '#F59E0B' : 'var(--app-text-muted)',
+                    transition: 'all 0.12s',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Create
+                </button>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ color: 'var(--app-text-dim)', fontSize: 10, flexShrink: 0, userSelect: 'none' }}>└</span>
                 <button
