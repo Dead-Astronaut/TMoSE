@@ -4,6 +4,8 @@ Active recall practice for Python Institute certifications. Built with a Gemini-
 
 ---
 
+## Live webpage: [TMoSE](https://tmose.vercel.app/)
+
 ## Certifications
 
 | Cert | Full Title | Exam |
@@ -11,7 +13,7 @@ Active recall practice for Python Institute certifications. Built with a Gemini-
 | PCEP™ | Certified Entry-Level Python Programmer | PCEP-30-02 |
 | PCAP™ | Certified Associate in Python Programming | PCAP-31-03 |
 | PCPP1™ | Certified Professional in Python Programming 1 | PCPP-32-10x |
-| PCEI™ | Certified Entry-Level AI Specialist | — |
+| PCEI™ | Certified Entry-Level AI Specialist | PCEI-30-01 |
 
 ---
 
