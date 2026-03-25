@@ -837,6 +837,15 @@ ol.template-content-list { list-style-type: decimal; }
   flex: 1;
 }
 
+.app-title-gradient {
+  background: linear-gradient(135deg, #7fff5f 0%, #4fffbf 35%, #ffffff 50%, #4fffbf 65%, #7fff5f 100%);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-flow 20s ease infinite;
+}
+
 .app-view-scroll {
   flex: 1;
   min-height: 0;
